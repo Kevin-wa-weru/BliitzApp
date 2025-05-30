@@ -1,0 +1,2 @@
+C:/Users/USER/Desktop/social/bliitz/android/app/.cxx/RelWithDebInfo/z2o4a5b1/x86/CMakeFiles/edit_cache.dir
+C:/Users/USER/Desktop/social/bliitz/android/app/.cxx/RelWithDebInfo/z2o4a5b1/x86/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,2 @@
+C:/Users/USER/Desktop/social/bliitz/android/app/.cxx/Debug/515u3031/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/USER/Desktop/social/bliitz/android/app/.cxx/Debug/515u3031/armeabi-v7a/CMakeFiles/rebuild_cache.dir

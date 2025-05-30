@@ -1,0 +1,135 @@
+name: bliitz
+description: "A fun platform for sharing social group links"
+publish_to: 'none' 
+version: 1.0.0+6
+
+environment:
+  sdk: '>=3.3.3 <4.0.0'
+
+dependencies:
+  audioplayers: ^6.4.0
+  bloc: ^9.0.0
+  bloc_test: ^10.0.0
+  cached_network_image: ^3.4.0
+  change_app_package_name: ^1.5.0
+  cloud_firestore: ^5.6.6
+  cloud_functions: ^5.5.0
+  connectivity_plus: ^6.1.3
+  cupertino_icons: ^1.0.8
+  firebase_auth: ^5.5.2
+  firebase_core: ^3.13.0
+  firebase_messaging: ^15.2.5
+  firebase_storage: ^12.4.5
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.0
+  flutter_facebook_auth: ^6.0.4
+  flutter_launcher_icons: ^0.14.3
+  flutter_local_notifications: ^19.1.0
+  flutter_native_splash: ^2.4.0
+  flutter_svg: ^2.0.10+1
+  # freezed: ^3.0.6
+  # freezed_annotation: ^3.0.0
+  go_router: ^15.1.1
+  google_sign_in: ^6.3.0
+  image_picker: ^1.1.2
+  in_app_purchase: ^3.2.3
+  json_annotation: ^4.9.0
+  octo_image: ^2.1.0
+  permission_handler: ^12.0.0+1
+  photo_manager: ^3.6.4
+  share_plus: ^10.1.4
+  shared_preferences: ^2.5.3
+  sqflite: ^2.4.2
+  url_launcher: ^6.3.1
+  visibility_detector: ^0.4.0+2
+  # cupertino_icons: ^1.0.8
+  # cached_network_image: ^3.4.1
+  # octo_image: ^2.1.0
+  # flutter_svg: ^2.0.16
+  # flutter_native_splash: ^2.4.4
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.15
+  json_serializable: ^6.9.5
+  # flutter_launcher_icons: "^0.13.1"
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/ic_background.png" 
+  adaptive_icon_background: "assets/icons/ic_background.png"
+  # adaptive_icon_foreground: "assets/icons/ic_launcher_2.png"
+  # adaptive_icon_foreground: "assets/icons/pipi.png"
+  adaptive_icon_foreground: "assets/icons/buti.png"
+  remove_alpha_ios: true
+  adaptive_icon_foreground_inset: 32
+
+flutter_native_splash:
+  color: "#000000" # Black background
+  image: assets/icons/ic_foreground.png # Your logo path
+  android: true
+  ios: true
+  fullscreen: true
+  android_gravity: center # Ensures logo is centered
+  # android_window_background: "#000000" 
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/sounds/
+    
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/poppins/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/poppins/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/poppins/Poppins-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/poppins/Poppins-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-Light.ttf
+          weight: 300
+        - asset: assets/fonts/poppins/Poppins-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/poppins/Poppins-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-Thin.ttf
+          weight: 200
+        - asset: assets/fonts/poppins/Poppins-ThinItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/poppins/Poppins-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/poppins/Poppins-Black.ttf
+          weight: 900
+        - asset: assets/fonts/poppins/Poppins-BlackItalic.ttf
+          weight: 900
+          style: italic
+
+    - family: Questrial
+      fonts:
+        - asset: assets/fonts/questrial/Questrial-Regular.ttf

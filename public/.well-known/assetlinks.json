@@ -1,0 +1,12 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.bliitz.social",
+        "sha256_cert_fingerprints": [
+          "bd:84:6a:b9:4f:3e:42:be:9b:b8:d3:bd:35:05:a1:54:a3:2e:7d:50:fb:ed:6f:2c:32:82:cd:e7:1a:a5:3f:bd"
+        ]
+      }
+    }
+  ]
