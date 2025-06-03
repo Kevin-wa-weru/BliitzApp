@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bliitz/services/auth_services.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +44,14 @@ class _SupportPageState extends State<SupportPage>
     }
 
     if (_textController.text.isNotEmpty) {
+      bool isConnected = await ConnectivityHelper.isConnected();
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+            content: const Text('No internet connection')));
+
+        return;
+      }
       Future<bool> uploaded =
           AuthServicesImpl().sendSupportRequest(_textController.text);
 

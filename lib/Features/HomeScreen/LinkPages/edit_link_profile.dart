@@ -6,6 +6,7 @@ import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_link_details.dart
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/services/link_services.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/photo_grid_view.dart';
@@ -132,6 +133,14 @@ class _EditGroupInfoState extends State<EditGroupInfo>
     }
 
     if (_nameController.text.isNotEmpty && _aboutController.text.isNotEmpty) {
+      bool isConnected = await ConnectivityHelper.isConnected();
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+            content: const Text('Action not completed,check your internet')));
+
+        return;
+      }
       FocusScope.of(context).unfocus();
       showDialog(
         context: context,

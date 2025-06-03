@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bliitz/services/actions_services.dart';
 import 'package:bliitz/utils/_index.dart' show Adapt;
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:flutter/material.dart';
 
@@ -30,6 +31,14 @@ class _ReportScreenState extends State<ReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Select the reason for reporting')));
     } else {
+      bool isConnected = await ConnectivityHelper.isConnected();
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+            content: const Text('No internet connection')));
+
+        return;
+      }
       Future<bool> uploaded = ActionServicesImpl().reportAccount(
           reportedUserId: widget.reportedUserId,
           issueMessage: _selectedReason!);

@@ -849,9 +849,9 @@ class LinkServicesImpl implements LinkServices {
       }
 
       await batch.commit();
-      print('Successfully updated ${querySnapshot.docs.length} links.');
+      debugPrint('Successfully updated ${querySnapshot.docs.length} links.');
     } catch (e) {
-      print('Error updating links: $e');
+      debugPrint('Error updating links: $e');
     }
   }
 }

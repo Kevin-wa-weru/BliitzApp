@@ -8,6 +8,7 @@ import 'package:bliitz/widgets/empty_data_widget.dart';
 import 'package:bliitz/widgets/profile_visit_skeleton.dart';
 import 'package:bliitz/widgets/social_chips.dart' show SocialChips;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -31,6 +32,8 @@ class ProfileVisitPage extends StatefulWidget {
 class _ProfileVisitPageState extends State<ProfileVisitPage> {
   final ValueNotifier<String> selectedSocial = ValueNotifier<String>('');
   final ValueNotifier<String> communitiesCount = ValueNotifier<String>('0');
+
+  final userId = FirebaseAuth.instance.currentUser?.uid;
   @override
   void initState() {
     super.initState();
@@ -90,12 +93,25 @@ class _ProfileVisitPageState extends State<ProfileVisitPage> {
                             padding: const EdgeInsets.only(right: 16.0),
                             child: GestureDetector(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ReportScreen(
-                                            reportedUserId: widget.creatorId,
-                                          )),
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    transitionDuration:
+                                        const Duration(milliseconds: 300),
+                                    pageBuilder: (context, animation,
+                                            secondaryAnimation) =>
+                                        ReportScreen(
+                                      reportedUserId: widget.creatorId,
+                                    ),
+                                    transitionsBuilder: (context, animation,
+                                        secondaryAnimation, child) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    opaque: true,
+                                    barrierColor: Colors.black,
+                                  ),
                                 );
                               },
                               child: Container(
@@ -450,8 +466,13 @@ class _ProfileVisitPageState extends State<ProfileVisitPage> {
                                     children: stateTwo.links.map((item) {
                                       return SingleGroupItem(
                                         groupDetails: item,
-                                        isOwnersGroups: true,
+                                        isOwnersGroups:
+                                            userId == widget.creatorId
+                                                ? true
+                                                : false,
                                         isViewinginGroupInfo: false,
+                                        index: stateTwo.links.indexOf(item),
+                                        navigationCount: 1,
                                       );
                                     }).toList(),
                                   ),

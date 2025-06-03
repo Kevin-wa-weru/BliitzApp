@@ -11,6 +11,7 @@ import 'package:bliitz/Features/Policy%20Documents/privacy_policy_page.dart';
 import 'package:bliitz/services/auth_services.dart';
 import 'package:bliitz/Features/Policy%20Documents/terms_condtions_page.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -137,10 +138,22 @@ class _AccountState extends State<Account> {
                   padding: const EdgeInsets.only(right: 16.0),
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SupportPage()),
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const SupportPage(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          opaque: true,
+                          barrierColor: Colors.black,
+                        ),
                       );
                     },
                     child: Opacity(
@@ -233,14 +246,27 @@ class _AccountState extends State<Account> {
                             padding: const EdgeInsets.only(right: 8.0),
                             child: GestureDetector(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditProfile(
-                                            userName: widget.userName,
-                                            profileUrl: widget.profileUrl,
-                                            aboutUser: widget.aboutUser,
-                                          )),
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    transitionDuration:
+                                        const Duration(milliseconds: 300),
+                                    pageBuilder: (context, animation,
+                                            secondaryAnimation) =>
+                                        EditProfile(
+                                      userName: widget.userName,
+                                      profileUrl: widget.profileUrl,
+                                      aboutUser: widget.aboutUser,
+                                    ),
+                                    transitionsBuilder: (context, animation,
+                                        secondaryAnimation, child) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    opaque: true,
+                                    barrierColor: Colors.black,
+                                  ),
                                 );
                               },
                               child: Container(
@@ -433,6 +459,16 @@ class SingleAccountItem extends StatelessWidget {
                     CupertinoDialogAction(
                       onPressed: () async {
                         if (title == 'Log Out?') {
+                          bool isConnected =
+                              await ConnectivityHelper.isConnected();
+                          if (!isConnected) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                backgroundColor:
+                                    const Color(0xE601DE27).withOpacity(.5),
+                                content: const Text('No internet connection')));
+
+                            return;
+                          }
                           isLoading.value = true;
                           bool isLoggedOut = await AuthServicesImpl().logOut();
 
@@ -454,6 +490,17 @@ class SingleAccountItem extends StatelessWidget {
                         }
 
                         if (title == 'Delete Account?') {
+                          bool isConnected =
+                              await ConnectivityHelper.isConnected();
+                          if (!isConnected) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                backgroundColor:
+                                    const Color(0xE601DE27).withOpacity(.5),
+                                content: const Text('No internet connection')));
+
+                            return;
+                          }
+
                           isLoading.value = true;
                           bool isDeleted =
                               await AuthServicesImpl().deleteUserAccount();
@@ -519,32 +566,78 @@ class SingleAccountItem extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           if (title == 'Send Notifications') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const SendNotifications()),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const SendNotifications(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
 
           if (title == 'Privacy Policy') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const PrivacyPoliciy()),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const PrivacyPoliciy(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
 
           if (title == 'Terms of Service') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TermsAndConditions()),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const TermsAndConditions(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
 
           if (title == 'About Us') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AboutUsScreen()),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const AboutUsScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
 
@@ -562,13 +655,25 @@ class SingleAccountItem extends StatelessWidget {
                 'Are you sure you want to proceed to change plan?', () async {
               final prefs = await SharedPreferences.getInstance();
               var paymentPlanId = prefs.getString('paymentPlanId');
-              final updatedItem = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => PromoteScreen(
-                          fromPage: 'AccountsPage',
-                          currentPlanId: paymentPlanId,
-                        )),
+
+              final updatedItem = await Navigator.of(context).push(
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 300),
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      PromoteScreen(
+                    fromPage: 'AccountsPage',
+                    currentPlanId: paymentPlanId,
+                  ),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  opaque: true,
+                  barrierColor: Colors.black,
+                ),
               );
 
               final itemCopy = items;

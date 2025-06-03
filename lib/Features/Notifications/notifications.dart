@@ -119,15 +119,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             ),
                             Padding(
                               padding: const EdgeInsets.only(top: 16.0),
-                              child: Text(
-                                'Looks like there are no notifications yet. Stay tuned!',
-                                style: TextStyle(
-                                  fontFamily: 'Questrial',
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 14,
-                                  letterSpacing: 0.5,
-                                  height: 1.5,
+                              child: Center(
+                                child: Text(
+                                  'Looks like there are no notifications yet. Stay tuned!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Questrial',
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14,
+                                    letterSpacing: 0.5,
+                                    height: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -136,13 +139,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       );
                     } else {
                       return Expanded(
-                        child: ListView(
-                            children: state.backgroundNotifications
-                                .map((e) => NotificationItem(
-                                      title: e.title!,
-                                      subtitle: e.message!,
-                                    ))
-                                .toList()),
+                        child: MediaQuery.removePadding(
+                          context: context,
+                          removeBottom: true,
+                          removeTop: true,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 60.0),
+                            itemCount: state.backgroundNotifications.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return NotificationItem(
+                                title:
+                                    state.backgroundNotifications[index].title!,
+                                subtitle: state
+                                    .backgroundNotifications[index].message!,
+                              );
+                            },
+                          ),
+                        ),
                       );
                     }
                   }

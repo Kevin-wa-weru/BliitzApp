@@ -8,6 +8,7 @@ import 'package:bliitz/Features/HomeScreen/main_page.dart';
 
 import 'package:bliitz/services/sql_services.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/widgets/internet_banner.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,10 +37,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await backgroundPersistence.insertMessage(backgroundNotification);
 }
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await Firebase.initializeApp();
+  InternetNotifier().startMonitoring();
 
   runApp(
     MultiBlocProvider(
@@ -116,10 +121,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // routerConfig: router,
       home: const MainPage(),
+      scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       title: 'Bliitz App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: Colors.black,
         useMaterial3: true,
         popupMenuTheme: PopupMenuThemeData(
           color: Colors.black,

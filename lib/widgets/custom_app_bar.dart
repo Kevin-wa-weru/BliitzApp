@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:bliitz/Features/HomeScreen/Explore/cubit/get_feed_links_cubit.dart';
 import 'package:bliitz/Features/Favorites/favourites_page.dart'
     show LikedGroups;
 import 'package:bliitz/Features/Notifications/notifications.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,14 +71,26 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     padding: const EdgeInsets.only(right: 16.0),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => LikedGroups(
-                                    userId:
-                                        FirebaseAuth.instance.currentUser!.uid,
-                                    isFromDeepLink: false,
-                                  )),
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            transitionDuration:
+                                const Duration(milliseconds: 300),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    LikedGroups(
+                              userId: FirebaseAuth.instance.currentUser!.uid,
+                              isFromDeepLink: false,
+                            ),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                            opaque: true,
+                            barrierColor: Colors.black,
+                          ),
                         );
                       },
                       child: SvgPicture.asset(
@@ -341,7 +356,21 @@ class _CustomAppBarState extends State<CustomAppBar> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xE601DE27),
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
+                                  bool isConnected =
+                                      await ConnectivityHelper.isConnected();
+                                  if (!isConnected) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            backgroundColor:
+                                                const Color(0xE601DE27)
+                                                    .withOpacity(.5),
+                                            content: const Text(
+                                                'No internet connection')));
+                                    Navigator.pop(context);
+                                    return;
+                                  }
+
                                   if (widget.currentPage == 'Explore') {
                                     Navigator.pop(context);
                                     widget.isPopupOpen.value = false;
@@ -386,10 +415,23 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     padding: const EdgeInsets.only(right: 16.0),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const NotificationScreen()),
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            transitionDuration:
+                                const Duration(milliseconds: 300),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    const NotificationScreen(),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                            opaque: true,
+                            barrierColor: Colors.black,
+                          ),
                         );
                       },
                       child: SvgPicture.asset(

@@ -73,6 +73,7 @@ class _LinkInfoPageDeepLinkState extends State<LinkInfoPageDeepLink> {
                     return GroupInfoScreen(
                       groupDetails: groupInfo,
                       isFromDeepLink: false,
+                      navigationCount: 1,
                     );
                   } else {
                     return const HomeScreen();

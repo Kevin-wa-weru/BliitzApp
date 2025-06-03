@@ -90,16 +90,29 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Account(
-                                              profileUrl: state.imageUrl,
-                                              userName: state.userName!,
-                                              aboutUser: state.aboutUser,
-                                              isVerfied: state.isVerified,
-                                              isAdmin: admin,
-                                            )),
+                                  Navigator.of(context).push(
+                                    PageRouteBuilder(
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                      pageBuilder: (context, animation,
+                                              secondaryAnimation) =>
+                                          Account(
+                                        profileUrl: state.imageUrl,
+                                        userName: state.userName!,
+                                        aboutUser: state.aboutUser,
+                                        isVerfied: state.isVerified,
+                                        isAdmin: admin,
+                                      ),
+                                      transitionsBuilder: (context, animation,
+                                          secondaryAnimation, child) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        );
+                                      },
+                                      opaque: true,
+                                      barrierColor: Colors.black,
+                                    ),
                                   );
                                 },
                                 child: Container(
@@ -199,11 +212,27 @@ class _ProfilePageState extends State<ProfilePage> {
                                   state.isVerified!
                                       ? GestureDetector(
                                           onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const GetVerified()),
+                                            Navigator.of(context).push(
+                                              PageRouteBuilder(
+                                                transitionDuration:
+                                                    const Duration(
+                                                        milliseconds: 300),
+                                                pageBuilder: (context,
+                                                        animation,
+                                                        secondaryAnimation) =>
+                                                    const GetVerified(),
+                                                transitionsBuilder: (context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                    child) {
+                                                  return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child,
+                                                  );
+                                                },
+                                                opaque: true,
+                                                barrierColor: Colors.black,
+                                              ),
                                             );
                                           },
                                           child: Icon(
@@ -268,13 +297,28 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const CreateGroupPage(
-                                                      isFromProfilePage: true,
-                                                    )),
+                                          Navigator.of(context).push(
+                                            PageRouteBuilder(
+                                              transitionDuration:
+                                                  const Duration(
+                                                      milliseconds: 300),
+                                              pageBuilder: (context, animation,
+                                                      secondaryAnimation) =>
+                                                  const CreateGroupPage(
+                                                isFromProfilePage: true,
+                                              ),
+                                              transitionsBuilder: (context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child) {
+                                                return FadeTransition(
+                                                  opacity: animation,
+                                                  child: child,
+                                                );
+                                              },
+                                              opaque: true,
+                                              barrierColor: Colors.black,
+                                            ),
                                           );
                                         },
                                         child: Card(
@@ -531,6 +575,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 groupDetails: item,
                                                 isOwnersGroups: true,
                                                 isViewinginGroupInfo: false,
+                                                index: stateTwo.links
+                                                    .indexOf(item),
+                                                navigationCount: 2,
                                               );
                                             }).toList(),
                                           ),

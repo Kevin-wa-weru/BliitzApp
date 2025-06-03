@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bliitz/Features/HomeScreen/Profile/cubit/get_pofile_details_cubit.dart';
 import 'package:bliitz/services/auth_services.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/photo_grid_view.dart';
@@ -127,6 +128,14 @@ class _EditProfileState extends State<EditProfile>
     }
 
     if (_nameController.text.isNotEmpty && _aboutController.text.isNotEmpty) {
+      bool isConnected = await ConnectivityHelper.isConnected();
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+            content: const Text('No internet connection')));
+
+        return;
+      }
       Future<bool> uploaded = AuthServicesImpl().updateProfile(
           imageFile: _selectedPhoto == null ? null : await _selectedPhoto!.file,
           name: _nameController.text,

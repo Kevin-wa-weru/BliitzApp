@@ -117,11 +117,22 @@ class _SearchPageState extends State<SearchPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const SearchCommunityScreen()),
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const SearchCommunityScreen(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          opaque: true,
+                          barrierColor: Colors.black,
+                        ),
                       );
                     },
                     child: SizedBox(
@@ -258,28 +269,31 @@ class _SearchPageState extends State<SearchPage> {
                               itemBuilder: (context, index) {
                                 return GestureDetector(
                                   onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => CategroyDetails(
-                                                categoryImageUrl:
-                                                    widget.gridItems[index]
-                                                        ['imageUrl'],
-                                                category: widget
-                                                    .gridItems[index]['name'],
-                                                socialType:
-                                                    selectedSocial.value,
-                                                isFromDeepLink: false,
-                                              )),
+                                    Navigator.of(context).push(
+                                      PageRouteBuilder(
+                                        transitionDuration:
+                                            const Duration(milliseconds: 300),
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            CategroyDetails(
+                                          categoryImageUrl: widget
+                                              .gridItems[index]['imageUrl'],
+                                          category: widget.gridItems[index]
+                                              ['name'],
+                                          socialType: selectedSocial.value,
+                                          isFromDeepLink: false,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          );
+                                        },
+                                        opaque: true,
+                                        barrierColor: Colors.black,
+                                      ),
                                     );
-                                    // Navigator.push(
-                                    //   context,
-                                    //   MaterialPageRoute(
-                                    //       builder: (context) => CategoryDetail(
-                                    //             title: widget.gridItems[index]
-                                    //                 ['name'],
-                                    //           )),
-                                    // );
                                   },
                                   child: Column(
                                     children: [

@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:bliitz/Features/HomeScreen/LinkPages/link_info_page.dart';
 import 'package:bliitz/Features/HomeScreen/Search/cubit/get_search_results.dart';
 import 'package:bliitz/Features/HomeScreen/LinkPages/owner_link_info.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +91,16 @@ class _SearchCommunityScreenState extends State<SearchCommunityScreen> {
                 controller: _searchController,
                 cursorColor: const Color(0xCC01DE27),
                 onTap: () {},
-                onChanged: (value) {
+                onChanged: (value) async {
+                  bool isConnected = await ConnectivityHelper.isConnected();
+                  if (!isConnected) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        backgroundColor:
+                            const Color(0xE601DE27).withOpacity(.5),
+                        content: const Text('No internet connection')));
+
+                    return;
+                  }
                   if (_searchController.text.isEmpty) {
                     context.read<GetSearchResultsCubit>().resetState();
                   } else {
@@ -319,24 +331,47 @@ class _SearchCommunityScreenState extends State<SearchCommunityScreen> {
         onTap: () {
           MiscImpl().saveRecentSearches(groupDetails: groupDetails);
           if (userId == groupDetails['createdBy']) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => OwnerGroupInfo(
-                        isFromDeepLink: false,
-                        groupDetails: groupDetails,
-                      )),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    OwnerGroupInfo(
+                  isFromDeepLink: false,
+                  groupDetails: groupDetails,
+                ),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
 
           if (userId != groupDetails['createdBy']) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => GroupInfoScreen(
-                        isFromDeepLink: false,
-                        groupDetails: groupDetails,
-                      )),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    GroupInfoScreen(
+                  isFromDeepLink: false,
+                  groupDetails: groupDetails,
+                  navigationCount: 1,
+                ),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                opaque: true,
+                barrierColor: Colors.black,
+              ),
             );
           }
         },
@@ -344,17 +379,31 @@ class _SearchCommunityScreenState extends State<SearchCommunityScreen> {
           children: [
             Row(
               children: [
-                Text(
-                  '${groupDetails['Name']} - ${groupDetails['Link Type']}',
-                  style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${groupDetails['Name']} - ${groupDetails['Link Type']}',
+                          style: TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              fontFamily: 'Poppins',
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      if (groupDetails['promoted'] != null &&
+                          groupDetails['promoted']) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.verified,
+                            color: Colors.green, size: 16)
+                      ],
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                if (verified)
-                  const Icon(Icons.verified, color: Colors.green, size: 16),
               ],
             ),
             const SizedBox(

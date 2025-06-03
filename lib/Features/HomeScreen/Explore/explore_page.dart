@@ -221,11 +221,14 @@ class _ExplorePageState extends State<ExplorePage>
                               child: ListView.builder(
                                 controller: _scrollController,
                                 padding: const EdgeInsets.only(bottom: 60.0),
+                                itemCount: state.links.length,
                                 itemBuilder: (BuildContext context, int index) {
                                   return SingleGroupItem(
                                     groupDetails: state.links[index],
                                     isOwnersGroups: false,
                                     isViewinginGroupInfo: false,
+                                    index: index,
+                                    navigationCount: 1,
                                   );
                                 },
                               ),

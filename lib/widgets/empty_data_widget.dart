@@ -24,15 +24,18 @@ class EmptyDataWidget extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
-            child: Text(
-              'Looks like there are no links yet. Stay tuned!',
-              style: TextStyle(
-                fontFamily: 'Questrial',
-                color: Colors.white.withOpacity(0.5),
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
-                letterSpacing: 0.5,
-                height: 1.5,
+            child: Center(
+              child: Text(
+                textAlign: TextAlign.center,
+                'Looks like there are no links yet. Stay tuned!',
+                style: TextStyle(
+                  fontFamily: 'Questrial',
+                  color: Colors.white.withOpacity(0.5),
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                  height: 1.5,
+                ),
               ),
             ),
           ),

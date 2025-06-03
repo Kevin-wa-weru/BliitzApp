@@ -4,10 +4,10 @@ class SoundPlayer {
   static final AudioPlayer _player = AudioPlayer();
 
   static Future<void> preload() async {
-    await _player.setSourceAsset('sounds/like.mp3');
+    await _player.setSourceAsset('sounds/like.mpeg');
   }
 
   static Future<void> playClickSound() async {
-    await _player.play(AssetSource('sounds/like.mp3'));
+    await _player.play(AssetSource('sounds/like.mpeg'));
   }
 }

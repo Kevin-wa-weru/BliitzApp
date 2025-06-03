@@ -4,6 +4,7 @@ import 'package:bliitz/Features/HomeScreen/Explore/cubit/get_feed_links_cubit.da
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/services/payment_services.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -632,7 +633,20 @@ class _PromoteScreenState extends State<PromoteScreen> {
                               valueListenable: _selectedPlanDetails,
                               builder: (context, selectedPlan, child) {
                                 return GestureDetector(
-                                  onTap: () {
+                                  onTap: () async {
+                                    bool isConnected =
+                                        await ConnectivityHelper.isConnected();
+                                    if (!isConnected) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(
+                                              backgroundColor:
+                                                  const Color(0xE601DE27)
+                                                      .withOpacity(.5),
+                                              content: const Text(
+                                                  'No internet connection')));
+
+                                      return;
+                                    }
                                     showPaymentBottomSheet(
                                         context: context,
                                         paymentType: selectedPlan['type'],

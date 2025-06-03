@@ -222,33 +222,54 @@ class _CategroyDetailsState extends State<CategroyDetails> {
                           background: SizedBox(
                             height: MediaQuery.of(context).size.height *
                                 getRatioHeight(200),
-                            child: Opacity(
-                              opacity: .7,
-                              child: OctoImage(
-                                fit: BoxFit.cover,
-                                image: CachedNetworkImageProvider(
-                                    state.links.first['Profile Image']),
-                                progressIndicatorBuilder: (context, p) {
-                                  double? value;
-                                  final expectedBytes = p?.expectedTotalBytes;
-                                  if (p != null && expectedBytes != null) {
-                                    value =
-                                        p.cumulativeBytesLoaded / expectedBytes;
-                                  }
-                                  return Align(
-                                    child: CircularProgressIndicator(
-                                      value: value,
-                                      strokeWidth: 2,
-                                      backgroundColor:
-                                          Colors.white.withOpacity(0.12),
-                                      color: const Color(0xFF141312),
+                            child: state.links.first['Profile Image'] == ''
+                                ? Container(
+                                    width: Adapt.screenW(),
+                                    height: MediaQuery.of(context).size.height *
+                                        getRatioHeight(200),
+                                    color: const Color(0xFF1E1D1C),
+                                    child: Center(
+                                      child: SvgPicture.asset(
+                                        'assets/icons/person.svg',
+                                        height: 48,
+                                        width: 48,
+                                        colorFilter: ColorFilter.mode(
+                                          Colors.white.withOpacity(0.5),
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
                                     ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stacktrace) =>
-                                    const Icon(Icons.error),
-                              ),
-                            ),
+                                  )
+                                : Opacity(
+                                    opacity: .7,
+                                    child: OctoImage(
+                                      fit: BoxFit.cover,
+                                      image: CachedNetworkImageProvider(
+                                          state.links.first['Profile Image']),
+                                      progressIndicatorBuilder: (context, p) {
+                                        double? value;
+                                        final expectedBytes =
+                                            p?.expectedTotalBytes;
+                                        if (p != null &&
+                                            expectedBytes != null) {
+                                          value = p.cumulativeBytesLoaded /
+                                              expectedBytes;
+                                        }
+                                        return Align(
+                                          child: CircularProgressIndicator(
+                                            value: value,
+                                            strokeWidth: 2,
+                                            backgroundColor:
+                                                Colors.white.withOpacity(0.12),
+                                            color: const Color(0xFF141312),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder:
+                                          (context, error, stacktrace) =>
+                                              const Icon(Icons.error),
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
@@ -325,19 +346,34 @@ class _CategroyDetailsState extends State<CategroyDetails> {
                                           children: [
                                             GestureDetector(
                                               onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          CreateGroupPage(
-                                                            isFromProfilePage:
-                                                                false,
-                                                            preselectedCategory:
-                                                                widget.category,
-                                                            preselectedSocialType:
-                                                                widget
-                                                                    .socialType,
-                                                          )),
+                                                Navigator.of(context).push(
+                                                  PageRouteBuilder(
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 300),
+                                                    pageBuilder: (context,
+                                                            animation,
+                                                            secondaryAnimation) =>
+                                                        CreateGroupPage(
+                                                      isFromProfilePage: false,
+                                                      preselectedCategory:
+                                                          widget.category,
+                                                      preselectedSocialType:
+                                                          widget.socialType,
+                                                    ),
+                                                    transitionsBuilder:
+                                                        (context,
+                                                            animation,
+                                                            secondaryAnimation,
+                                                            child) {
+                                                      return FadeTransition(
+                                                        opacity: animation,
+                                                        child: child,
+                                                      );
+                                                    },
+                                                    opaque: true,
+                                                    barrierColor: Colors.black,
+                                                  ),
                                                 );
                                               },
                                               child: Container(
@@ -432,6 +468,8 @@ class _CategroyDetailsState extends State<CategroyDetails> {
                               groupDetails: items[index],
                               isOwnersGroups: false,
                               isViewinginGroupInfo: false,
+                              index: index,
+                              navigationCount: 1,
                             );
                           },
                           childCount: state.links.length,

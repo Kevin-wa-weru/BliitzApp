@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, unrelated_type_equality_checks
 
 import 'dart:math';
 import 'dart:ui';
@@ -8,6 +8,7 @@ import 'package:bliitz/Features/HomeScreen/LinkPages/link_info_page.dart';
 import 'package:bliitz/Features/Payments/payment_plans_screen.dart';
 import 'package:bliitz/services/actions_services.dart';
 import 'package:bliitz/services/link_services.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/utils/smooth_transitions.dart' show CustomPageRoute;
 import 'package:bliitz/utils/sound_player.dart';
@@ -25,11 +26,15 @@ class SingleGroupItem extends StatefulWidget {
     required this.groupDetails,
     required this.isOwnersGroups,
     required this.isViewinginGroupInfo,
+    required this.index,
+    required this.navigationCount,
   });
 
   final Map<String, dynamic> groupDetails;
   final bool isOwnersGroups;
   final bool isViewinginGroupInfo;
+  final int index;
+  final int navigationCount;
   @override
   State<SingleGroupItem> createState() => _SingleGroupItemState();
 }
@@ -50,6 +55,15 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
   }
 
   void onFavouriteTap() async {
+    bool isConnected = await ConnectivityHelper.isConnected();
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+          content: const Text('No internet connection')));
+
+      return;
+    }
+    if (ConnectivityHelper.isConnected() == true) {}
     bool alreadyFavorite =
         await MiscImpl().isFavorite(widget.groupDetails['id']);
 
@@ -113,20 +127,52 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
               children: [
                 GestureDetector(
                   onTap: () {
+                    // showGeneralDialog(
+                    //   context: context,
+                    //   barrierLabel: "ImageDialog",
+                    //   barrierDismissible: true,
+                    //   barrierColor: Colors.black.withOpacity(0.8),
+                    //   transitionDuration: const Duration(milliseconds: 300),
+                    //   pageBuilder: (_, __, ___) {
+                    //     return HeroImageDialog(
+                    //       imageUrl: widget.groupDetails['Profile Image'],
+                    //       groupName: widget.groupDetails['Name'],
+                    //       isOwnersGroups: widget.isOwnersGroups,
+                    //       groupId: widget.groupDetails['id'],
+                    //       isFavoriteNotifier: isFavoriteNotifier,
+                    //       groupDetails: widget.groupDetails,
+                    //       isViewinginGroupInfo: widget.isOwnersGroups,
+                    //       index: widget.index,
+                    //     );
+                    //   },
+                    //   transitionBuilder: (_, anim, __, child) {
+                    //     return FadeTransition(
+                    //       opacity: CurvedAnimation(
+                    //           parent: anim, curve: Curves.easeInOut),
+                    //       child: child,
+                    //     );
+                    //   },
+                    // );
+
                     Navigator.push(
                       context,
                       PageRouteBuilder(
-                        opaque: false,
-                        pageBuilder: (_, __, ___) => HeroImageDialog(
-                          imageUrl: widget.groupDetails['Profile Image'],
-                          groupName: widget.groupDetails['Name'],
-                          isOwnersGroups: widget.isOwnersGroups,
-                          groupId: widget.groupDetails['id'],
-                          isFavoriteNotifier: isFavoriteNotifier,
-                          groupDetails: widget.groupDetails,
-                          isViewinginGroupInfo: widget.isOwnersGroups,
-                        ),
-                      ),
+                          opaque: false,
+                          barrierDismissible: true,
+                          barrierColor: Colors.black.withOpacity(0.85),
+                          transitionDuration: const Duration(milliseconds: 300),
+                          pageBuilder: (_, __, ___) => HeroImageDialog(
+                                imageUrl: widget.groupDetails['Profile Image'],
+                                groupName: widget.groupDetails['Name'],
+                                isOwnersGroups: widget.isOwnersGroups,
+                                groupId: widget.groupDetails['id'],
+                                isFavoriteNotifier: isFavoriteNotifier,
+                                groupDetails: widget.groupDetails,
+                                isViewinginGroupInfo:
+                                    widget.isViewinginGroupInfo,
+                                index: widget.index,
+                                navigationCount: widget.navigationCount,
+                              )),
                     );
                   },
                   child: ClipRRect(
@@ -135,9 +181,9 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                       bottomLeft: Radius.circular(16),
                     ),
                     child: Hero(
-                      tag: widget.isViewinginGroupInfo
-                          ? 'Yes${widget.groupDetails['id']}'
-                          : widget.groupDetails['id'],
+                      tag: widget.navigationCount > 1
+                          ? '1${widget.index}${widget.groupDetails['id']}'
+                          : '${widget.index}${widget.groupDetails['id']}',
                       child: widget.groupDetails['Profile Image'] == ''
                           ? Container(
                               color: Colors.transparent,
@@ -203,38 +249,48 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Flexible(
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      widget.groupDetails['Name'],
-                                      style: TextStyle(
-                                        fontFamily: 'Questrial',
-                                        color: Colors.white.withOpacity(0.8),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        letterSpacing: 0.25,
-                                        height: 1.5,
-                                        decorationColor:
-                                            Colors.white.withOpacity(0.75),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    widget.groupDetails['promoted']
-                                        ? const SizedBox(
+                              Row(
+                                children: [
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                        maxWidth:
+                                            MediaQuery.of(context).size.width *
+                                                0.3),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            widget.groupDetails['Name'],
+                                            style: TextStyle(
+                                              fontFamily: 'Questrial',
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: 0.25,
+                                              height: 1.5,
+                                              decorationColor:
+                                                  Colors.transparent,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (widget
+                                            .groupDetails['promoted']) ...[
+                                          const SizedBox(
                                             width: 4,
-                                          )
-                                        : const SizedBox.shrink(),
-                                    widget.groupDetails['promoted']
-                                        ? const Icon(
+                                          ),
+                                          const Icon(
                                             Icons.verified,
                                             size: 18,
                                             color: Color(0xE601DE27),
                                           )
-                                        : const SizedBox.shrink(),
-                                  ],
-                                ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                               Builder(builder: (context) {
                                 return ValueListenableBuilder<int>(
@@ -393,6 +449,10 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                                                                 GroupInfoScreen(
                                                   isFromDeepLink: false,
                                                   groupDetails: updatedDetails,
+                                                  navigationCount: widget
+                                                          .isViewinginGroupInfo
+                                                      ? 2
+                                                      : 1,
                                                 )));
                                                 if (updatedItem['linkId'] ==
                                                     widget.groupDetails['id']) {
@@ -549,7 +609,9 @@ class HeroImageDialog extends StatefulWidget {
       required this.groupId,
       required this.isFavoriteNotifier,
       required this.groupDetails,
-      required this.isViewinginGroupInfo});
+      required this.isViewinginGroupInfo,
+      required this.index,
+      required this.navigationCount});
   final String imageUrl;
   final String groupId;
   final String groupName;
@@ -557,6 +619,8 @@ class HeroImageDialog extends StatefulWidget {
   final bool isViewinginGroupInfo;
   final Map<String, dynamic> groupDetails;
   final ValueNotifier<bool> isFavoriteNotifier;
+  final int index;
+  final int navigationCount;
   @override
   // ignore: library_private_types_in_public_api
   _HeroImageDialogState createState() => _HeroImageDialogState();
@@ -600,9 +664,9 @@ class _HeroImageDialogState extends State<HeroImageDialog>
                 await _controller.reverse();
               },
               child: Hero(
-                tag: widget.isViewinginGroupInfo
-                    ? 'Yes${widget.groupId}'
-                    : widget.groupId,
+                tag: widget.navigationCount > 1
+                    ? '1${widget.index}${widget.groupId}'
+                    : '${widget.index}${widget.groupId}',
                 child: AnimatedBuilder(
                   animation: _scaleAnimation,
                   builder: (context, child) {
@@ -678,34 +742,46 @@ class _HeroImageDialogState extends State<HeroImageDialog>
                                     const EdgeInsets.only(left: 8.0, right: 8),
                                 child: Row(
                                   children: [
-                                    Flexible(
-                                      child: Text(
-                                        widget.groupName,
-                                        style: TextStyle(
-                                          fontFamily: 'Questrial',
-                                          color: Colors.white.withOpacity(0.8),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                          letterSpacing: 0.25,
-                                          height: 1.5,
-                                          decorationColor: Colors.transparent,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                          maxWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.5),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              widget.groupName,
+                                              style: TextStyle(
+                                                fontFamily: 'Questrial',
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                                letterSpacing: 0.25,
+                                                height: 1.5,
+                                                decorationColor:
+                                                    Colors.transparent,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (widget
+                                              .groupDetails['promoted']) ...[
+                                            const SizedBox(
+                                              width: 4,
+                                            ),
+                                            const Icon(
+                                              Icons.verified,
+                                              size: 18,
+                                              color: Color(0xE601DE27),
+                                            )
+                                          ],
+                                        ],
                                       ),
                                     ),
-                                    widget.groupDetails['promoted']
-                                        ? const SizedBox(
-                                            width: 4,
-                                          )
-                                        : const SizedBox.shrink(),
-                                    widget.groupDetails['promoted']
-                                        ? const Icon(
-                                            Icons.verified,
-                                            size: 18,
-                                            color: Color(0xE601DE27),
-                                          )
-                                        : const SizedBox.shrink(),
                                   ],
                                 ),
                               ),
@@ -755,6 +831,10 @@ class _HeroImageDialogState extends State<HeroImageDialog>
                                                                   false,
                                                               groupDetails: widget
                                                                   .groupDetails,
+                                                              navigationCount:
+                                                                  widget.isViewinginGroupInfo
+                                                                      ? 2
+                                                                      : 1,
                                                             )),
                                                   );
                                                 }

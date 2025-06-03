@@ -635,14 +635,27 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                                         planId: paymentPlanId);
                                     _isPromoted.value = true;
                                   } else {
-                                    final updatedItem = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => PromoteScreen(
-                                                linkId:
-                                                    widget.groupDetails['id'],
-                                                fromPage: 'LinkDetailsPage',
-                                              )),
+                                    final updatedItem =
+                                        await Navigator.of(context).push(
+                                      PageRouteBuilder(
+                                        transitionDuration:
+                                            const Duration(milliseconds: 300),
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            PromoteScreen(
+                                          linkId: widget.groupDetails['id'],
+                                          fromPage: 'LinkDetailsPage',
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          );
+                                        },
+                                        opaque: true,
+                                        barrierColor: Colors.black,
+                                      ),
                                     );
 
                                     if (updatedItem['hasPaid']) {
@@ -713,15 +726,28 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                           if (state is GetLinkDetailsStateLoaded) {
                             return InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditGroupInfo(
-                                            groupName: state.linkName!,
-                                            imageUrl: state.imageUrl,
-                                            groupBio: state.aboutLink,
-                                            groupId: widget.groupDetails['id'],
-                                          )),
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    transitionDuration:
+                                        const Duration(milliseconds: 300),
+                                    pageBuilder: (context, animation,
+                                            secondaryAnimation) =>
+                                        EditGroupInfo(
+                                      groupName: state.linkName!,
+                                      imageUrl: state.imageUrl,
+                                      groupBio: state.aboutLink,
+                                      groupId: widget.groupDetails['id'],
+                                    ),
+                                    transitionsBuilder: (context, animation,
+                                        secondaryAnimation, child) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    opaque: true,
+                                    barrierColor: Colors.black,
+                                  ),
                                 );
                               },
                               child: Container(

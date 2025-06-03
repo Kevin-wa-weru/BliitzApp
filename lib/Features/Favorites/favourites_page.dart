@@ -420,11 +420,13 @@ class _LikedGroupsState extends State<LikedGroups> {
                               }
 
                               return Column(
-                                  children: state.links
+                                  children: state.links.reversed
                                       .map((e) => SingleGroupItem(
                                             groupDetails: e,
                                             isOwnersGroups: false,
                                             isViewinginGroupInfo: false,
+                                            index: state.links.indexOf(e),
+                                            navigationCount: 1,
                                           ))
                                       .toList());
                             }

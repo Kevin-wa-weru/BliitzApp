@@ -6,6 +6,7 @@ import 'package:bliitz/Features/HomeScreen/CategoryPages/cubit/get_links_categor
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/services/link_services.dart';
 import 'package:bliitz/utils/_index.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/photo_grid_view.dart';
@@ -77,9 +78,10 @@ class _CreateGroupPageState extends State<CreateGroupPage>
       type: RequestType.image,
     );
 
-    List<AssetEntity> photos =
-        await albums.first.getAssetListPaged(page: 0, size: 100);
-
+    late List<AssetEntity> photos = [];
+    if (albums.isNotEmpty) {
+      photos = await albums.first.getAssetListPaged(page: 0, size: 100);
+    }
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
@@ -200,6 +202,15 @@ class _CreateGroupPageState extends State<CreateGroupPage>
         selectedLinkType.value.isNotEmpty &&
         _descriptionController.text.isNotEmpty &&
         selectedCategory.value.isNotEmpty) {
+      bool isConnected = await ConnectivityHelper.isConnected();
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+            content: const Text('No internet connection')));
+
+        return;
+      }
+
       if (_selectedPhoto == null) {
         Future<bool> uploaded = LinkServicesImpl().uploadAndSaveLink(
             social: selectedSocial.value,

@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:math';
 
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_might_like_links_cubit.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/pofile_visit_page.dart';
+import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/widgets/group_item.dart';
 import 'package:bliitz/services/actions_services.dart';
 import 'package:bliitz/utils/_index.dart';
@@ -19,10 +22,14 @@ import 'package:share_plus/share_plus.dart';
 
 class GroupInfoScreen extends StatefulWidget {
   const GroupInfoScreen(
-      {super.key, required this.groupDetails, required this.isFromDeepLink});
+      {super.key,
+      required this.groupDetails,
+      required this.isFromDeepLink,
+      required this.navigationCount});
 
   final Map<String, dynamic> groupDetails;
   final bool isFromDeepLink;
+  final int navigationCount;
   @override
   State<GroupInfoScreen> createState() => _GroupInfoScreenState();
 }
@@ -74,6 +81,14 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 
   void onFavouriteTap() async {
+    bool isConnected = await ConnectivityHelper.isConnected();
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+          content: const Text('No internet connection')));
+
+      return;
+    }
     bool alreadyFavorite =
         await MiscImpl().isFavorite(widget.groupDetails['id']);
 
@@ -101,6 +116,14 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 
   void onLikeTap() async {
+    bool isConnected = await ConnectivityHelper.isConnected();
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+          content: const Text('No internet connection')));
+
+      return;
+    }
     bool alreadyLiked = await MiscImpl().isLikedLink(widget.groupDetails['id']);
     bool alreadyDisLiked =
         await MiscImpl().isDisLikedLink(widget.groupDetails['id']);
@@ -132,6 +155,14 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 
   void onDisLikeTap() async {
+    bool isConnected = await ConnectivityHelper.isConnected();
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: const Color(0xE601DE27).withOpacity(.5),
+          content: const Text('No internet connection')));
+
+      return;
+    }
     bool alreadyDisLiked =
         await MiscImpl().isDisLikedLink(widget.groupDetails['id']);
     bool alreadyLiked = await MiscImpl().isLikedLink(widget.groupDetails['id']);
@@ -315,7 +346,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                           ConstrainedBox(
                             constraints: BoxConstraints(
                                 maxWidth:
-                                    MediaQuery.of(context).size.width * 0.5),
+                                    MediaQuery.of(context).size.width * 0.45),
                             child: Row(
                               children: [
                                 Expanded(
@@ -350,14 +381,26 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                       padding: const EdgeInsets.only(right: 18.0),
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProfileVisitPage(
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              transitionDuration:
+                                  const Duration(milliseconds: 300),
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      ProfileVisitPage(
                                 isPopupOpen: isPopupOpen,
                                 creatorId: widget.groupDetails['createdBy'],
                                 isFromDeepLink: false,
                               ),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                              opaque: true,
+                              barrierColor: Colors.black,
                             ),
                           );
                         },
@@ -385,8 +428,11 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward_ios,
-                                  size: 10, color: Colors.black),
+                              Transform.translate(
+                                offset: const Offset(4, 0),
+                                child: const Icon(Icons.arrow_forward_ios,
+                                    size: 10, color: Colors.black),
+                              ),
                             ],
                           ),
                         ),
@@ -757,59 +803,63 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                 const SizedBox(
                   height: 24,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 18.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        'You may also like',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0,
-                          height: 1.4,
+                if (widget.navigationCount <= 1) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 18.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          'You may also like',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(
-                  height: 24,
-                ),
-                BlocConsumer<GetMighLikeLinksCubit, GetMighLikeLinksState>(
-                  listener: (context, state) {},
-                  builder: (context, state) {
-                    if (state is GetMighLikeLinksStateLoaded) {
-                      if (state.links.isEmpty) {
+                  const SizedBox(
+                    height: 24,
+                  ),
+                  BlocConsumer<GetMighLikeLinksCubit, GetMighLikeLinksState>(
+                    listener: (context, state) {},
+                    builder: (context, state) {
+                      if (state is GetMighLikeLinksStateLoaded) {
+                        if (state.links.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 0.0),
+                            child: EmptyDataWidget(),
+                          );
+                        }
+                        return Column(
+                            children: state.links
+                                .map((e) => SingleGroupItem(
+                                      groupDetails: e,
+                                      isOwnersGroups: false,
+                                      isViewinginGroupInfo: true,
+                                      index: state.links.indexOf(e),
+                                      navigationCount: 2,
+                                    ))
+                                .toList());
+                      }
+
+                      if (state is GetMighLikeLinksStateLoading) {
                         return const Padding(
                           padding: EdgeInsets.only(top: 0.0),
-                          child: EmptyDataWidget(),
+                          child: SingleGroupItemSkeleton(
+                            itemCount: [1, 2, 3, 4],
+                          ),
                         );
+                      } else {
+                        return const SizedBox.shrink();
                       }
-                      return Column(
-                          children: state.links
-                              .map((e) => SingleGroupItem(
-                                    groupDetails: e,
-                                    isOwnersGroups: false,
-                                    isViewinginGroupInfo: true,
-                                  ))
-                              .toList());
-                    }
-
-                    if (state is GetMighLikeLinksStateLoading) {
-                      return const Padding(
-                        padding: EdgeInsets.only(top: 0.0),
-                        child: SingleGroupItemSkeleton(
-                          itemCount: [1, 2, 3, 4],
-                        ),
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
+                    },
+                  ),
+                ],
               ],
             ),
           ),
