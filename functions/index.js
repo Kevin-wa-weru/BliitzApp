@@ -17,7 +17,7 @@ const auth = new google.auth.GoogleAuth({
 
 const PACKAGE_NAME = "com.bliitz.social";
 
-
+// Function for sending notifications to all users
 exports.sendNotificationToAll = functions.https.
     onCall(async (data, context) => {
       const {title, message} = data;
@@ -124,7 +124,7 @@ exports.oauthRedirectHandler = functions.https.
       res.status(200).send("Received data");
     });
 
-
+// Function for checking payment subscriptio status
 exports.checkSubscriptionStatus = functions.
     https.onCall(async (data, context) => {
       const {purchaseToken, subscriptionId} = data;
@@ -161,7 +161,7 @@ exports.checkSubscriptionStatus = functions.
       }
     });
 
-
+// Function for consuming one time purchase before another purchase
 exports.consumeOneTimeProduct = functions.https.
     onCall(async (data, context) => {
       const {productId, purchaseToken} = data;
@@ -201,10 +201,16 @@ exports.consumeOneTimeProduct = functions.https.
       }
     });
 
+// Function for feed personlisation
 exports.fetchUserPersonalizedFeed = functions.https.
     onCall(async (data, context) => {
       const userId = data.userId;
       const limit = data.limit || 20;
+
+      const likedLinkIds = Array.
+          isArray(data.likedLinkIds) ? data.likedLinkIds : [];
+      const favoriteLinkIds = Array.
+          isArray(data.favoriteLinkIds) ? data.favoriteLinkIds : [];
 
       if (!userId) {
         throw new functions.https.
@@ -213,32 +219,17 @@ exports.fetchUserPersonalizedFeed = functions.https.
 
       const firestore = admin.firestore();
 
-      // Step 1: Fetch liked and favorite link IDs
-      const likedSnap = await firestore
-          .collection("Users")
-          .doc(userId)
-          .collection("Liked")
-          .get();
-
-      const favoriteSnap = await firestore
-          .collection("Users")
-          .doc(userId)
-          .collection("Favorites")
-          .get();
-
-      const likedLinkIds = likedSnap.docs.
-          map((doc) => doc.id);
-      const favoriteLinkIds = favoriteSnap.docs.
-          map((doc) => doc.id);
-
+      // ✅ Combined liked + favorite link IDs (client provided)
       const interactedLinkIds = Array.
-          from(new Set([...likedLinkIds, ...favoriteLinkIds])).slice(0, 20);
+          from(new Set([...likedLinkIds, ...favoriteLinkIds])).
+          slice(0, 20);
 
+      // If no interactions, return trending
       if (interactedLinkIds.length === 0) {
         return fetchTrendingLinks(firestore, limit);
       }
 
-      // Step 2: Build user preferences profile
+      // 🧠 Build user preference profile from links
       const tagCount = {};
       const categoryCount = {};
 
@@ -248,8 +239,8 @@ exports.fetchUserPersonalizedFeed = functions.https.
         if (!doc.exists) continue;
 
         const data = doc.data();
-        const tags = Array.isArray(data.searchKeywords) ?
-        data.searchKeywords : [];
+        const tags = Array.
+            isArray(data.searchKeywords) ? data.searchKeywords : [];
         const category = data.Category;
 
         tags.forEach((tag) => {
@@ -268,34 +259,34 @@ exports.fetchUserPersonalizedFeed = functions.https.
           .map((entry) => entry[0]);
 
       let mostPreferredCategory = null;
-      if (Object.keys(categoryCount).length > 0) {
+      if (Object.
+          keys(categoryCount).length > 0) {
         mostPreferredCategory = Object.entries(categoryCount)
             .sort((a, b) => b[1] - a[1])[0][0];
       }
 
-      // Step 3: Query personalized feed
+      // 🔎 Query personalized feed
       let query = firestore.collection("Links")
           .orderBy("rankingScore", "desc")
           .orderBy("totalImpressions", "asc");
 
       if (topTags.length > 0) {
-        query = query.where("searchKeywords",
-            "array-contains-any", topTags);
+        query = query.
+            where("searchKeywords", "array-contains-any", topTags);
       }
 
       if (mostPreferredCategory) {
-        query = query.where("Category", "==",
-            mostPreferredCategory);
+        query = query.
+            where("Category", "==", mostPreferredCategory);
       }
 
       try {
-      // Fetch a larger pool to balance impressions and ranking
         const poolSize = limit * 3;
-        const result = await query.
-            limit(poolSize).get();
+        const result = await query.limit(poolSize).get();
 
         let feed = result.docs
             .map((doc) => ({id: doc.id, ...doc.data()}))
+            .sort((a, b) => b.rankingScore - a.rankingScore)
             .slice(0, limit);
 
         if (feed.length < limit) {
@@ -306,7 +297,8 @@ exports.fetchUserPersonalizedFeed = functions.https.
 
         return feed;
       } catch (error) {
-        console.error("Error fetching personalized feed:", error);
+        console.
+            error("Error fetching personalized feed:", error);
         return fetchTrendingLinks(firestore, limit);
       }
     });
@@ -345,9 +337,9 @@ exports.fetchYouMightAlsoLikeLinks = functions.
       };
 
       try {
-        // Step 1: Category + searchKeywords
+      // Step 1: Category + searchKeywords
         if (category && Array.isArray(searchKeywords) &&
-       searchKeywords.length > 0) {
+        searchKeywords.length > 0) {
           const query = firestore.collection("Links")
               .where("Category", "==", category)
               .where("searchKeywords", "array-contains-any",
@@ -390,6 +382,7 @@ exports.fetchYouMightAlsoLikeLinks = functions.
       }
     });
 
+// Fetching Search suggestions
 exports.fetchSearchSuggestions = functions.https.
     onCall(async (data, context) => {
       const userId = data.userId;
@@ -398,19 +391,17 @@ exports.fetchSearchSuggestions = functions.https.
             HttpsError("invalid-argument", "userId is required.");
       }
 
+
+      const favoritedIds = Array.
+          isArray(data.favoriteLinkIds) ? data.favoriteLinkIds : [];
+
+
       const firestore = admin.firestore();
-      const userRef = firestore.
-          collection("Users").doc(userId);
+
       const searchedIds = data.searchedLinkIds || [];
 
       try {
-        // 1. Fetch favorited links
-        const favSnapshot = await userRef.
-            collection("Favorites").get();
-        const favoritedIds = favSnapshot.docs.
-            map((doc) => doc.id);
-
-        // 2. Fetch created links
+      // 2. Fetch created links
         const createdSnapshot = await firestore
             .collection("Links")
             .where("createdBy", "==", userId)
