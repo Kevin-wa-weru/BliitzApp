@@ -172,8 +172,6 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
     _checkIfFavorite();
     favoriteCountNotifier.value = widget.groupDetails['favourites'];
 
-    print(
-        'Nyabskskks ${widget.groupDetails['likes']}, ${widget.groupDetails['dislikes']}');
     likeCountNotifier.value = widget.groupDetails['likes'];
     dislikeCountNotifier.value = widget.groupDetails['dislikes'];
   }
@@ -565,8 +563,6 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                                                                     'linkId'] ==
                                                                 widget.groupDetails[
                                                                     'id']) {
-                                                              print(
-                                                                  'Dwiwnss ${updatedItem['likeCount']}, ${updatedItem['dislikeCount']}');
                                                               favoriteCountNotifier
                                                                       .value =
                                                                   updatedItem[

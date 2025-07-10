@@ -74,8 +74,6 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
     _checkIfLiked();
     _checkIfDisLiked();
     favoriteCountNotifier.value = widget.groupDetails['favourites'];
-    print(
-        'Sdsdsdssd ${widget.groupDetails['likes']}, ${widget.groupDetails['dislikes']}');
     likeCountNotifier.value = widget.groupDetails['likes'];
     dislikeCountNotifier.value = widget.groupDetails['dislikes'];
 
@@ -293,8 +291,6 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                                                   .pushReplacement(
                                                                       '/');
                                                             } else {
-                                                              print(
-                                                                  'Ushwalass ${dislikeCounttt}, $likeCounttt');
                                                               Navigator.pop(
                                                                 context,
                                                                 {

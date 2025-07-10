@@ -302,7 +302,6 @@ class LinkServicesImpl implements LinkServices {
   Future<List<Map<String, dynamic>>> fetchSpeicifcUserinksBySocial(
       String socialType, String userId) async {
     try {
-      print('Vwalasss ${socialType}');
       final snapshot = await FirebaseFirestore.instance
           .collection('Links')
           .where('Social', isEqualTo: socialType) // 👈 Filter by social type

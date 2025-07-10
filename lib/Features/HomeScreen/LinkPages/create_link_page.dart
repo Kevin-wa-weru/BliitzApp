@@ -592,9 +592,6 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                                           .detectSocialApp(
                                                               _linkController
                                                                   .text);
-
-                                                  print(
-                                                      'Vwalaa ${_detectedSocial.value}');
                                                 }
 
                                                 if (_linkController

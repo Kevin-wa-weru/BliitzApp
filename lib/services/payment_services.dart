@@ -227,7 +227,7 @@ class PaymentServicesImpl implements PaymentServices {
               int.parse(result.data['expiryTimeMillis'].toString()));
 
           debugPrint(
-              'Subscription verfication reslt from cloud ${activeUntill}.');
+              'Subscription verfication reslt from cloud $activeUntill.');
 
           if (result.data['active'] == true) {
             debugPrint(

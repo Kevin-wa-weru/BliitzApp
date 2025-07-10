@@ -1,7 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:bliitz/Features/HomeScreen/Explore/cubit/get_feed_links_cubit.dart';
-import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/cubit/get_pofile_details_cubit.dart';
 import 'package:bliitz/services/payment_services.dart';
 import 'package:bliitz/utils/_index.dart';
@@ -503,8 +501,6 @@ class _GetVerifiedState extends State<GetVerified> {
                     late Map<String, dynamic>? selectedProduct = {};
                     selectedProduct = await PaymentServicesImpl()
                         .getProductById('verify_monthly');
-
-                    print('Ushawals ${selectedProduct}');
 
                     _selectedPlanDetails.value = {
                       'id': selectedProduct!['id'] ?? '',

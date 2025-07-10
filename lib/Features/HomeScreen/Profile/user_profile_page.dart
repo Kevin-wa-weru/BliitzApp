@@ -5,7 +5,6 @@ import 'package:bliitz/Features/Payments/get_verified_screen.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/user_account_page.dart';
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/cubit/get_pofile_details_cubit.dart';
-import 'package:bliitz/services/link_services.dart';
 import 'package:bliitz/services/payment_services.dart';
 import 'package:bliitz/widgets/custom_app_bar.dart';
 import 'package:bliitz/widgets/group_item.dart';
@@ -15,7 +14,6 @@ import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/empty_data_widget.dart';
 import 'package:bliitz/widgets/social_chips.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +22,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:octo_image/octo_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, required this.isPopupOpen});
