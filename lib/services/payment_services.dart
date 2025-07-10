@@ -14,7 +14,9 @@ abstract class PaymentServices {
   Future<Map<String, String>?> getProductById(String productId);
   Future<void> buyProduct(ProductDetails productDetails);
   // Future<List<PurchaseDetails>> getActivePurchases();
-  Future<void> getActivePurchases();
+  Future<void> getActivePurchases(
+      {required DocumentSnapshot<Map<String, dynamic>> doc});
+  Future<bool> cancelSubscription(String subscriptionId, String purchaseToken);
 }
 
 class PaymentServicesImpl implements PaymentServices {
@@ -29,6 +31,8 @@ class PaymentServicesImpl implements PaymentServices {
       'subscribe_basic',
       'subscribe_essential',
       'subscribe_premium',
+      'verify_monthly',
+      'verify_annually',
     };
 
     final InAppPurchase iap = InAppPurchase.instance;
@@ -113,22 +117,37 @@ class PaymentServicesImpl implements PaymentServices {
     }
   }
 
+  Future<void> clearUserVerificationPaymentFields(String userId) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      await firestore.collection('Users').doc(userId).update({
+        'verficationpaymentPlanId': '',
+        'verficationpurchaseDate': '',
+        'verficationpurchaseverificationData': '',
+        'verified': false
+      });
+
+      debugPrint('User payment fields cleared successfully.');
+    } catch (e) {
+      debugPrint('Error clearing user payment fields: $e');
+    }
+  }
+
   @override
-  Future<void> getActivePurchases() async {
+  Future<bool> getActivePurchases(
+      {required DocumentSnapshot<Map<String, dynamic>> doc}) async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         debugPrint('❌ No user logged in.');
-        return;
+        return doc.data()!['verified'];
       }
-
-      final doc = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userId)
-          .get();
 
       if (doc.exists && doc.data() != null) {
         final prefs = await SharedPreferences.getInstance();
+
+        ////// Feature payments //////
 
         String? purchaseverificationData =
             doc.data()!['purchaseverificationData'];
@@ -136,6 +155,9 @@ class PaymentServicesImpl implements PaymentServices {
         String? purchaseDateString = doc.data()!['purchaseDate'];
 
         if (paymentPlanId != null && paymentPlanId.isNotEmpty) {
+          //
+          // One time
+
           if (paymentPlanId.contains('upgrade')) {
             consumeIfExpired(
                 purchaseDateString: purchaseDateString!,
@@ -143,6 +165,8 @@ class PaymentServicesImpl implements PaymentServices {
                 purchaseToken: purchaseverificationData!,
                 userId: userId);
           }
+          //
+          // Subscriptions
 
           if (paymentPlanId.contains('subscribe')) {
             final result = await FirebaseFunctions.instance
@@ -157,24 +181,87 @@ class PaymentServicesImpl implements PaymentServices {
                   'Subscription is active until ${DateTime.fromMillisecondsSinceEpoch(int.parse(result.data['expiryTimeMillis']))}');
             } else {
               debugPrint('Subscription is not active.');
+              final activeUntil = DateTime.fromMillisecondsSinceEpoch(
+                  int.parse(result.data['expiryTimeMillis'].toString()));
 
-              prefs.setString(
-                'paymentPlanId',
-                '',
-              );
+              if (DateTime.now().isAfter(activeUntil)) {
+                prefs.setString(
+                  'paymentPlanId',
+                  '',
+                );
 
-              await clearUserPaymentFields(userId);
+                await clearUserPaymentFields(userId);
 
-              await LinkServicesImpl().resetUserLinkPromotion(userId);
+                await LinkServicesImpl().resetUserLinkPromotion(userId);
+              }
             }
           }
         }
+
+        //////   Verification payments   //////
+        String? verficationpaymentPlanId =
+            doc.data()!['verficationpaymentPlanId'];
+        String? verficationpurchaseverificationData =
+            doc.data()!['verficationpurchaseverificationData'];
+
+        if (verficationpaymentPlanId != null &&
+            verficationpaymentPlanId.isNotEmpty) {
+          prefs.setString(
+            'verficationpaymentPlanId',
+            verficationpaymentPlanId,
+          );
+
+          prefs.setString(
+            'verficationpurchaseverificationData',
+            verficationpurchaseverificationData!,
+          );
+
+          final result = await FirebaseFunctions.instance
+              .httpsCallable('checkSubscriptionStatus')
+              .call({
+            'subscriptionId': verficationpaymentPlanId,
+            'purchaseToken': verficationpurchaseverificationData
+          });
+
+          final activeUntill = DateTime.fromMillisecondsSinceEpoch(
+              int.parse(result.data['expiryTimeMillis'].toString()));
+
+          debugPrint(
+              'Subscription verfication reslt from cloud ${activeUntill}.');
+
+          if (result.data['active'] == true) {
+            debugPrint(
+                'Subscription verfication is active until ${DateTime.fromMillisecondsSinceEpoch(int.parse(result.data['expiryTimeMillis'].toString()))}');
+            return doc.data()!['verified'];
+          } else {
+            debugPrint('Subscription verfication is not active.');
+
+            if (DateTime.now().isAfter(activeUntill)) {
+              prefs.setString(
+                'verficationpaymentPlanId',
+                '',
+              );
+              prefs.setString(
+                'verficationpurchaseverificationData',
+                '',
+              );
+
+              await clearUserVerificationPaymentFields(userId);
+
+              return false;
+            } else {
+              return doc.data()!['verified'];
+            }
+          }
+        } else {
+          return doc.data()!['verified'];
+        }
       } else {
-        return; // Bio not set or document missing
+        return false; // Bio not set or document missing
       }
     } catch (e) {
       debugPrint('❌ Failed to fetch purchaseDetails details: $e');
-      return;
+      return doc.data()!['verified'];
     }
   }
 
@@ -219,6 +306,29 @@ class PaymentServicesImpl implements PaymentServices {
       }
     } catch (e) {
       debugPrint('Error consuming product: $e');
+    }
+  }
+
+  @override
+  Future<bool> cancelSubscription(
+      String subscriptionId, String purchaseToken) async {
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('cancelSubscription');
+
+    try {
+      final result = await callable.call({
+        'subscriptionId': subscriptionId,
+        'purchaseToken': purchaseToken,
+        'packageName': 'com.bliitz.social'
+      });
+
+      if (result.data['success']) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
     }
   }
 }

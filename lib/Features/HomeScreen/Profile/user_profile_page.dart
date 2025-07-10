@@ -1,8 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:bliitz/Features/HomeScreen/LinkPages/create_link_page.dart';
 import 'package:bliitz/Features/Payments/get_verified_screen.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/user_account_page.dart';
 import 'package:bliitz/Features/HomeScreen/LinkPages/cubit/get_owners_links.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/cubit/get_pofile_details_cubit.dart';
+import 'package:bliitz/services/link_services.dart';
+import 'package:bliitz/services/payment_services.dart';
 import 'package:bliitz/widgets/custom_app_bar.dart';
 import 'package:bliitz/widgets/group_item.dart';
 import 'package:bliitz/services/auth_services.dart';
@@ -11,13 +15,16 @@ import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/empty_data_widget.dart';
 import 'package:bliitz/widgets/social_chips.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:octo_image/octo_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, required this.isPopupOpen});
@@ -27,7 +34,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final ValueNotifier<String> selectedSocial = ValueNotifier<String>('');
+  final ValueNotifier<bool> isCancellingPlan = ValueNotifier(false);
+  final ValueNotifier<String> selectedSocial =
+      ValueNotifier<String>('Facebook');
   final ValueNotifier<String> communitiesCount = ValueNotifier<String>('0');
   final ValueNotifier<String> favoritesCount = ValueNotifier<String>('0');
   final ValueNotifier<String> impressionsCount = ValueNotifier<String>('0');
@@ -49,6 +58,113 @@ class _ProfilePageState extends State<ProfilePage> {
     communitiesCount.value = commCount!;
     favoritesCount.value = favCount!;
     impressionsCount.value = impCount!;
+  }
+
+  void showCustomCupertinoDialog(
+      {required BuildContext context,
+      required String title,
+      required String message}) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Dismiss",
+      barrierColor: Colors.black54, // Semi-transparent background
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(), // Dismiss on tap outside
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GestureDetector(
+                onTap:
+                    () {}, // Prevents tap from propagating to outer GestureDetector
+                child: CupertinoTheme(
+                  data: const CupertinoThemeData(
+                      brightness: Brightness.dark), // Ensures a dark theme
+                  child: CupertinoAlertDialog(
+                    title: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xCC01DE27), // Green shade used in the UI
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Questrial',
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      ValueListenableBuilder<bool>(
+                          valueListenable: isCancellingPlan,
+                          builder: (context, loading, child) {
+                            return CupertinoDialogAction(
+                              onPressed: () async {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                var verficationpaymentPlanId =
+                                    prefs.getString('verficationpaymentPlanId');
+                                var verficationpurchaseverificationData =
+                                    prefs.getString(
+                                        'verficationpurchaseverificationData');
+
+                                isCancellingPlan.value = true;
+                                Future<bool> actionCompleted =
+                                    PaymentServicesImpl().cancelSubscription(
+                                        verficationpaymentPlanId!,
+                                        verficationpurchaseverificationData!);
+                                if (await actionCompleted) {
+                                  isCancellingPlan.value = false;
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('You have unsubscribed')));
+                                } else {
+                                  isCancellingPlan.value = false;
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('Failed, Try again later')));
+                                }
+                              },
+                              child: loading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xCC01DE27),
+                                      ),
+                                    )
+                                  : Text(
+                                      "Cancel plan?",
+                                      style: TextStyle(
+                                        fontFamily: 'Questrial',
+                                        color: Colors.red.withOpacity(.7),
+                                      ), // Green accent
+                                    ),
+                            );
+                          }),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -209,40 +325,54 @@ class _ProfilePageState extends State<ProfilePage> {
                                   const SizedBox(
                                     width: 8,
                                   ),
-                                  state.isVerified!
-                                      ? GestureDetector(
-                                          onTap: () {
-                                            Navigator.of(context).push(
-                                              PageRouteBuilder(
-                                                transitionDuration:
-                                                    const Duration(
-                                                        milliseconds: 300),
-                                                pageBuilder: (context,
-                                                        animation,
-                                                        secondaryAnimation) =>
-                                                    const GetVerified(),
-                                                transitionsBuilder: (context,
-                                                    animation,
-                                                    secondaryAnimation,
-                                                    child) {
-                                                  return FadeTransition(
-                                                    opacity: animation,
-                                                    child: child,
-                                                  );
-                                                },
-                                                opaque: true,
-                                                barrierColor: Colors.black,
-                                              ),
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.verified,
-                                            size: 18,
-                                            color:
-                                                Colors.white.withOpacity(0.7),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
+                                      var verficationpaymentPlanId =
+                                          prefs.getString(
+                                              'verficationpaymentPlanId');
+
+                                      if (verficationpaymentPlanId == null ||
+                                          verficationpaymentPlanId.isEmpty) {
+                                        Navigator.of(context).push(
+                                          PageRouteBuilder(
+                                            transitionDuration: const Duration(
+                                                milliseconds: 300),
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                const GetVerified(),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return FadeTransition(
+                                                opacity: animation,
+                                                child: child,
+                                              );
+                                            },
+                                            opaque: true,
+                                            barrierColor: Colors.black,
                                           ),
-                                        )
-                                      : const SizedBox.shrink()
+                                        );
+                                      } else {
+                                        showCustomCupertinoDialog(
+                                            context: context,
+                                            title: 'Current Verification Plan',
+                                            message: verficationpaymentPlanId ==
+                                                    'verify_annually'
+                                                ? 'Annual Verification  \$89.99 Yearly'
+                                                : 'Monthly Verification  \$8.99 Montlhy');
+                                      }
+                                    },
+                                    child: Icon(
+                                      Icons.verified,
+                                      size: 18,
+                                      color: state.isVerified!
+                                          ? const Color(0xE601DE27)
+                                          : Colors.white.withOpacity(0.7),
+                                    ),
+                                  )
                                 ],
                               ),
                               const SizedBox(

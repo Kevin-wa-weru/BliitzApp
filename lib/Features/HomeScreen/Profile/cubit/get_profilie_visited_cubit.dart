@@ -15,6 +15,7 @@ class GetVisitedProfileDetailsCubit
   Future<void> getProfileDetails(String userId) async {
     emit(GetVisitedProfileDetailsStateLoading());
     var userDetails = await _authServices.fetchSpecificUserProfile(userId);
+    print('Usadedelee ${userDetails}');
     emit(GetVisitedProfileDetailsStateLoaded(
       imageUrl: userDetails!['photoURL'],
       userName: userDetails['name'],

@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bliitz/services/actions_services.dart';
+import 'package:bliitz/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -49,15 +50,15 @@ abstract class LinkServices {
     required String? uploaderId,
     int limit = 10,
   });
-  Future<List<Map<String, dynamic>>> fetchUserPersonalizedFeed({
-    int limit = 20,
-  });
+
   Future<Map<String, dynamic>?> fetchLinkDetails(String linkId);
   Future<bool> alterLinkScore(
       {required String linkId,
       required bool isIncrement,
       required String planId});
   Future<void> resetUserLinkPromotion(String userId);
+  Future<List<Map<String, dynamic>>> fetchUserFeedFromCloud(
+      {int limit = 20, required bool fetchFirstSocial});
 }
 
 class LinkServicesImpl implements LinkServices {
@@ -102,6 +103,10 @@ class LinkServicesImpl implements LinkServices {
         imageUrl = await ref.getDownloadURL();
       }
 
+      final prefs = await SharedPreferences.getInstance();
+      var verficationpaymentPlanId =
+          prefs.getString('verficationpaymentPlanId');
+
       // 2. Create document in Firestore
       await FirebaseFirestore.instance.collection('Links').add({
         'Social': social,
@@ -119,7 +124,10 @@ class LinkServicesImpl implements LinkServices {
         'dislikes': 0,
         'rankingScore': 0,
         'totalImpressions': 0,
-        'promoted': false,
+        'promoted': verficationpaymentPlanId != null &&
+                verficationpaymentPlanId.isNotEmpty
+            ? true
+            : false,
       });
 
       await FirebaseFirestore.instance
@@ -136,15 +144,26 @@ class LinkServicesImpl implements LinkServices {
 
         if (!categorySnapshot.exists) {
           // 👶 First time this category is being used
-          transaction.set(categoryRef, {
-            'name': category,
-            'linkCount': 1,
-          });
+          if (imageUrl == null || imageUrl.isEmpty) {
+            transaction.set(categoryRef, {
+              'name': category,
+              'linkCount': 1,
+            });
+          }
+          if (imageUrl!.isNotEmpty) {
+            transaction.set(categoryRef,
+                {'name': category, 'linkCount': 1, 'imageUrl': imageUrl});
+          }
         } else {
           // 🛠 Category exists, increment the linkCount
-          transaction.update(categoryRef, {
-            'linkCount': FieldValue.increment(1),
-          });
+
+          if (imageUrl == null) {
+            transaction.update(categoryRef,
+                {'linkCount': FieldValue.increment(1), 'imageUrl': imageUrl});
+          } else {
+            transaction.update(categoryRef,
+                {'linkCount': FieldValue.increment(1), 'imageUrl': imageUrl});
+          }
         }
       });
 
@@ -283,6 +302,7 @@ class LinkServicesImpl implements LinkServices {
   Future<List<Map<String, dynamic>>> fetchSpeicifcUserinksBySocial(
       String socialType, String userId) async {
     try {
+      print('Vwalasss ${socialType}');
       final snapshot = await FirebaseFirestore.instance
           .collection('Links')
           .where('Social', isEqualTo: socialType) // 👈 Filter by social type
@@ -349,15 +369,18 @@ class LinkServicesImpl implements LinkServices {
       {required String userId}) async {
     try {
       // Step 1: Get favorited group IDs
-      final favSnapshot = await FirebaseFirestore.instance
+      final doc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(userId)
-          .collection('Favorites')
           .get();
-
-      final groupIds = favSnapshot.docs.map((doc) => doc.id).toList();
-
-      if (groupIds.isEmpty) return [];
+      late List groupIds = [];
+      if (doc.exists && doc.data() != null) {
+        if (doc.data()!['favoritesLinks'] == null) {
+          return [];
+        } else {
+          groupIds = doc.data()!['favoritesLinks'];
+        }
+      }
 
       // Step 2: Batch fetch group details using `whereIn` (max 30 at a time)
       final groups = <Map<String, dynamic>>[];
@@ -391,16 +414,19 @@ class LinkServicesImpl implements LinkServices {
     if (userId == null) return [];
 
     try {
-      // Step 1: Get favorited link IDs
-      final favSnapshot = await FirebaseFirestore.instance
+      // Step 1: Get favorited group IDs
+      final doc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(userId)
-          .collection('Favorites')
           .get();
-
-      final favLinkIds = favSnapshot.docs.map((doc) => doc.id).toList();
-
-      if (favLinkIds.isEmpty) return [];
+      late List favLinkIds = [];
+      if (doc.exists && doc.data() != null) {
+        if (doc.data()!['favoritesLinks'] == null) {
+          return [];
+        } else {
+          favLinkIds = doc.data()!['favoritesLinks'];
+        }
+      }
 
       // Step 2: Fetch Links by ID (in batches of 10–30)
       const batchSize = 10;
@@ -531,57 +557,33 @@ class LinkServicesImpl implements LinkServices {
 
   @override
   Future<List<Map<String, dynamic>>> fetchSearchSuggestions() async {
-    final firestore = FirebaseFirestore.instance;
-    final userRef = firestore
-        .collection('Users')
-        .doc(FirebaseAuth.instance.currentUser?.uid);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final searchedJson = prefs.getStringList('searched_links') ?? [];
+      final searchedIds =
+          searchedJson.map((e) => json.decode(e)['id'].toString()).toSet();
+      final searchedLinkIds =
+          searchedIds.map((e) => json.decode(e)['id'].toString()).toList();
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('fetchSearchSuggestions');
 
-    // 1. Fetch favorited links
-    final favSnapshot = await userRef.collection('Favorites').get();
-    final favoritedIds = favSnapshot.docs.map((doc) => doc.id).toSet();
+      final favoritedLinks = await MiscImpl().getFavoriteLinks();
 
-    // 2. Fetch created links
-    final createdSnapshot = await firestore
-        .collection('Links')
-        .where('createdBy', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-        .get();
+      final result = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser?.uid,
+        'searchedLinkIds': searchedLinkIds, // List<String>
+        'favoriteLinkIds': favoritedLinks,
+      });
 
-    final createdIds = createdSnapshot.docs.map((doc) => doc.id).toSet();
+      final List<Map<String, dynamic>> links = (result.data as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
 
-    // 3. Fetch searched links from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final searchedJson = prefs.getStringList('searched_links') ?? [];
-    final searchedIds =
-        searchedJson.map((e) => json.decode(e)['id'].toString()).toSet();
-
-    // 4. Combine all unique linkIds
-    final allLinkIds = {...favoritedIds, ...createdIds, ...searchedIds};
-
-    if (allLinkIds.isEmpty) return [];
-
-    // 5. Chunk IDs if necessary to avoid Firestore "whereIn" limit (max 10 per call)
-    final chunks = allLinkIds.toList().sliced(10); // See helper below
-
-    List<Map<String, dynamic>> allLinks = [];
-
-    for (final chunk in chunks) {
-      final query = await firestore
-          .collection('Links')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
-
-      allLinks.addAll(query.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id; // ✅ Add document ID
-        return data;
-      }));
+      return links;
+    } catch (e) {
+      debugPrint("❌ Failed to fetch search links: $e");
+      return [];
     }
-
-    // 6. Sort by rankingScore descending
-    allLinks.sort(
-        (a, b) => (b['rankingScore'] ?? 0).compareTo(a['rankingScore'] ?? 0));
-
-    return allLinks;
   }
 
   @override
@@ -592,159 +594,62 @@ class LinkServicesImpl implements LinkServices {
     required String? uploaderId,
     int limit = 10,
   }) async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    Future<List<Map<String, dynamic>>> queryLinks(Query query) async {
-      final snapshot = await query.limit(limit).get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return data;
-      }).toList();
-    }
-
     try {
-      // 1. Category + tags
-      if (category != null &&
-          searchKeywords != null &&
-          searchKeywords.isNotEmpty) {
-        final query = firestore
-            .collection('Links')
-            .where(FieldPath.documentId, isNotEqualTo: currentLinkId)
-            .where('Category', isEqualTo: category)
-            .where('searchKeywords',
-                arrayContainsAny: searchKeywords.take(10).toList());
+      final functions = FirebaseFunctions.instance;
+      final callable = functions.httpsCallable('fetchYouMightAlsoLikeLinks');
 
-        final result = await queryLinks(query);
-        if (result.isNotEmpty) return result;
-      }
+      final response = await callable.call({
+        // 'currentLinkId': currentLinkId,
+        'category': category,
+        'searchKeywords': searchKeywords,
+        'limit': limit,
+        // 'creatorId': uploaderId
+      });
 
-      // 2. Category only
-      if (category != null) {
-        final query = firestore
-            .collection('Links')
-            .where(FieldPath.documentId, isNotEqualTo: currentLinkId)
-            .where('Category', isEqualTo: category);
+      final List<Map<String, dynamic>> links = (response.data as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
 
-        final result = await queryLinks(query);
-        if (result.isNotEmpty) return result;
-      }
-
-      // 3. Fallback: any other links (random-like)
-      final fallbackQuery = firestore
-          .collection('Links')
-          .where(FieldPath.documentId, isNotEqualTo: currentLinkId);
-
-      final fallbackResult = await queryLinks(fallbackQuery);
-      return fallbackResult;
+      debugPrint('✅ Might Like Links: $links $category');
+      return links;
     } catch (e) {
+      debugPrint('❌ Error calling cloud function: $e');
       return [];
     }
   }
 
   @override
-  Future<List<Map<String, dynamic>>> fetchUserPersonalizedFeed({
-    int limit = 20,
-  }) async {
-    final firestore = FirebaseFirestore.instance;
-    final likedLinkIds = await ActionServicesImpl().fetchLikedLinks();
-    final favoriteLinkIds = await ActionServicesImpl().fetchFavorites();
-
-    final interactedLinkIds = {...likedLinkIds, ...favoriteLinkIds};
-
-    if (interactedLinkIds.isEmpty) {
-      return fetchTrendingLinks(limit: limit);
-    }
-
-    final interactedIds = interactedLinkIds.take(20).toList();
-    final snapshots = await Future.wait(interactedIds.map(
-      (id) => firestore.collection('Links').doc(id).get(),
-    ));
-
-    // Preference profile
-    final Map<String, int> tagCount = {};
-    final Map<String, int> categoryCount = {};
-
-    for (var doc in snapshots) {
-      if (!doc.exists) continue;
-      final data = doc.data();
-      if (data == null) continue;
-
-      final tagsRaw = data['searchKeywords'];
-      final tags = (tagsRaw is List) ? List<String>.from(tagsRaw) : <String>[];
-
-      final category = data['Category'];
-
-      for (final tag in tags) {
-        tagCount[tag] = (tagCount[tag] ?? 0) + 1;
-      }
-
-      if (category != null) {
-        categoryCount[category] = (categoryCount[category] ?? 0) + 1;
-      }
-    }
-
-    final topTags = tagCount.keys.take(10).toList();
-
-    String? mostPreferredCategory;
-    if (categoryCount.isNotEmpty) {
-      final sorted = categoryCount.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      mostPreferredCategory = sorted.first.key;
-    }
-
-    // Build query
-    Query<Map<String, dynamic>> query = firestore
-        .collection('Links')
-        .orderBy('rankingScore', descending: true)
-        .limit(limit);
-
-    if (topTags.isNotEmpty) {
-      query = query.where('searchKeywords', arrayContainsAny: topTags);
-    }
-
-    if (mostPreferredCategory != null) {
-      query = query.where('Category', isEqualTo: mostPreferredCategory);
-    }
-
+  Future<List<Map<String, dynamic>>> fetchUserFeedFromCloud(
+      {int limit = 20, required bool fetchFirstSocial}) async {
     try {
-      final result = await query.get();
+      final likedLInks = await MiscImpl().getLikedLinks();
+      final favoritedLinks = await MiscImpl().getFavoriteLinks();
 
-      List<Map<String, dynamic>> feed = result.docs.map((doc) {
-        final data = doc.data();
-        return {
-          ...data,
-          'id': doc.id,
-        };
-      }).toList();
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('fetchUserPersonalizedFeed');
+      final result = await callable.call({
+        'userId': FirebaseAuth.instance.currentUser?.uid,
+        'likedLinkIds': likedLInks, // Set<String> or List<String>
+        'favoriteLinkIds': favoritedLinks,
+        'limit': limit
+      });
 
-      if (feed.length < limit) {
-        final fallback = await fetchTrendingLinks(limit: limit - feed.length);
-        feed.addAll(fallback);
+      // Return the list from the function
+      final List<dynamic> data = result.data;
+
+      if (fetchFirstSocial) {
+        final List<dynamic> facebookSocials =
+            data.where((element) => element['Social'] == "Facebook").toList();
+        return facebookSocials
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      } else {
+        return data.map((e) => Map<String, dynamic>.from(e)).toList();
       }
-
-      return feed;
     } catch (e) {
-      debugPrint('❌ Error fetching personalized feed: $e');
-      return fetchTrendingLinks(limit: limit);
+      debugPrint('❌ Error calling cloud function: $e');
+      return [];
     }
-  }
-
-  Future<List<Map<String, dynamic>>> fetchTrendingLinks(
-      {int limit = 10}) async {
-    final firestore = FirebaseFirestore.instance;
-    final result = await firestore
-        .collection('Links')
-        // .orderBy('rankingScore', descending: true) // 👈 prioritize paid users
-        .orderBy('likes', descending: true) // 👈 fallback sort by likes
-        .limit(limit)
-        .get();
-
-    return result.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id;
-      return data;
-    }).toList();
   }
 
   @override

@@ -13,6 +13,7 @@ import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/utils/smooth_transitions.dart' show CustomPageRoute;
 import 'package:bliitz/utils/sound_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:octo_image/octo_image.dart';
@@ -44,6 +45,9 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
   final ValueNotifier<int> favoriteCountNotifier = ValueNotifier(0);
   final ValueNotifier<bool> _isPromoted = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _hasTrackedImpression = ValueNotifier(false);
+
+  final ValueNotifier<int> likeCountNotifier = ValueNotifier(0);
+  final ValueNotifier<int> dislikeCountNotifier = ValueNotifier(0);
   int subtractAndClampToZero(int original, int amountToSubtract) {
     return max(0, original - amountToSubtract);
   }
@@ -90,15 +94,88 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
     }
   }
 
+  void showCustomCupertinoDialog(
+      {required BuildContext context,
+      required String title,
+      required String message}) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoTheme(
+        data: const CupertinoThemeData(
+            brightness: Brightness.dark), // Ensures a dark theme
+        child: Container(
+          color: Colors.black.withOpacity(0.8), // Background color
+          child: CupertinoAlertDialog(
+            title: Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xCC01DE27), // Green shade used in the UI
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Questrial',
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.white.withOpacity(.7),
+                  ), // Green accent
+                ),
+              ),
+              CupertinoDialogAction(
+                onPressed: () async {
+                  MiscImpl().openLink(
+                    widget.groupDetails['Link'],
+                  );
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "OK",
+                  style: TextStyle(
+                      fontFamily: 'Questrial',
+                      color: Color(0xCC01DE27)), // Green accent
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
 
-    if (widget.groupDetails['promoted']) {
+    if (widget.groupDetails['promoted'] != null &&
+        widget.groupDetails['promoted']) {
       _isPromoted.value = true;
     }
     _checkIfFavorite();
     favoriteCountNotifier.value = widget.groupDetails['favourites'];
+
+    print(
+        'Nyabskskks ${widget.groupDetails['likes']}, ${widget.groupDetails['dislikes']}');
+    likeCountNotifier.value = widget.groupDetails['likes'];
+    dislikeCountNotifier.value = widget.groupDetails['dislikes'];
   }
 
   @override
@@ -276,8 +353,10 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (widget
-                                            .groupDetails['promoted']) ...[
+                                        if (widget.groupDetails['promoted'] !=
+                                                null &&
+                                            widget
+                                                .groupDetails['promoted']) ...[
                                           const SizedBox(
                                             width: 4,
                                           ),
@@ -422,81 +501,140 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                                 ),
                               ),
                               ValueListenableBuilder<int>(
-                                  valueListenable: favoriteCountNotifier,
-                                  builder: (context, favCount, child) {
-                                    return ValueListenableBuilder<bool>(
-                                        valueListenable: isFavoriteNotifier,
-                                        builder: (context, isFavorite, _) {
-                                          return GestureDetector(
-                                            onTap: () async {
-                                              final updatedDetails =
-                                                  widget.groupDetails;
+                                  valueListenable: likeCountNotifier,
+                                  builder: (context, likeCount, child) {
+                                    return ValueListenableBuilder<int>(
+                                        valueListenable: dislikeCountNotifier,
+                                        builder:
+                                            (context, dislikeCountt, child) {
+                                          return ValueListenableBuilder<int>(
+                                              valueListenable:
+                                                  favoriteCountNotifier,
+                                              builder:
+                                                  (context, favCountt, child) {
+                                                return ValueListenableBuilder<
+                                                        bool>(
+                                                    valueListenable:
+                                                        isFavoriteNotifier,
+                                                    builder: (context,
+                                                        isFavorite, _) {
+                                                      return GestureDetector(
+                                                        onTap: () async {
+                                                          final updatedDetails =
+                                                              widget
+                                                                  .groupDetails;
 
-                                              updatedDetails['favourites'] =
-                                                  favCount;
-                                              if (widget.isOwnersGroups) {
-                                                Navigator.of(context)
-                                                    .push(CustomPageRoute(
-                                                        page: OwnerGroupInfo(
-                                                  groupDetails: updatedDetails,
-                                                  isFromDeepLink: false,
-                                                )));
-                                              } else {
-                                                final updatedItem =
-                                                    await Navigator.of(context)
-                                                        .push(CustomPageRoute(
-                                                            page:
-                                                                GroupInfoScreen(
-                                                  isFromDeepLink: false,
-                                                  groupDetails: updatedDetails,
-                                                  navigationCount: widget
-                                                          .isViewinginGroupInfo
-                                                      ? 2
-                                                      : 1,
-                                                )));
-                                                if (updatedItem['linkId'] ==
-                                                    widget.groupDetails['id']) {
-                                                  favoriteCountNotifier.value =
-                                                      updatedItem['favCount'];
-                                                  isFavoriteNotifier.value =
-                                                      updatedItem[
-                                                          'isFavorited'];
-                                                }
-                                              }
-                                            },
-                                            child: Card(
-                                              color: const Color(0xFF1E1D1C),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(25.0),
-                                              ),
-                                              elevation: 2,
-                                              child: Center(
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 8),
-                                                  child: Text(
-                                                    'Open',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Questrial',
-                                                      color: Colors.white
-                                                          .withOpacity(0.7),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12,
-                                                      letterSpacing: 0.5,
-                                                      height: 1.2,
-                                                      decorationColor: Colors
-                                                          .white
-                                                          .withOpacity(0.75),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
+                                                          updatedDetails[
+                                                                  'favourites'] =
+                                                              favCountt.abs();
+                                                          updatedDetails[
+                                                                  'likes'] =
+                                                              likeCount;
+                                                          updatedDetails[
+                                                                  'dislikes'] =
+                                                              dislikeCountt
+                                                                  .abs();
+
+                                                          if (widget
+                                                              .isOwnersGroups) {
+                                                            Navigator.of(context).push(
+                                                                CustomPageRoute(
+                                                                    page:
+                                                                        OwnerGroupInfo(
+                                                              groupDetails:
+                                                                  updatedDetails,
+                                                              isFromDeepLink:
+                                                                  false,
+                                                            )));
+                                                          } else {
+                                                            final updatedItem =
+                                                                await Navigator.of(
+                                                                        context)
+                                                                    .push(CustomPageRoute(
+                                                                        page: GroupInfoScreen(
+                                                              isFromDeepLink:
+                                                                  false,
+                                                              groupDetails:
+                                                                  updatedDetails,
+                                                              navigationCount:
+                                                                  widget.isViewinginGroupInfo
+                                                                      ? 2
+                                                                      : 1,
+                                                            )));
+                                                            if (updatedItem[
+                                                                    'linkId'] ==
+                                                                widget.groupDetails[
+                                                                    'id']) {
+                                                              print(
+                                                                  'Dwiwnss ${updatedItem['likeCount']}, ${updatedItem['dislikeCount']}');
+                                                              favoriteCountNotifier
+                                                                      .value =
+                                                                  updatedItem[
+                                                                      'favCount'];
+                                                              isFavoriteNotifier
+                                                                      .value =
+                                                                  updatedItem[
+                                                                      'isFavorited'];
+                                                              likeCountNotifier
+                                                                      .value =
+                                                                  updatedItem[
+                                                                      'likeCount'];
+                                                              dislikeCountNotifier
+                                                                      .value =
+                                                                  updatedItem[
+                                                                      'dislikeCount'];
+                                                            }
+                                                          }
+                                                        },
+                                                        child: Card(
+                                                          color: const Color(
+                                                              0xFF1E1D1C),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        25.0),
+                                                          ),
+                                                          elevation: 2,
+                                                          child: Center(
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          16,
+                                                                      vertical:
+                                                                          8),
+                                                              child: Text(
+                                                                'Open',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontFamily:
+                                                                      'Questrial',
+                                                                  color: Colors
+                                                                      .white
+                                                                      .withOpacity(
+                                                                          0.7),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 12,
+                                                                  letterSpacing:
+                                                                      0.5,
+                                                                  height: 1.2,
+                                                                  decorationColor: Colors
+                                                                      .white
+                                                                      .withOpacity(
+                                                                          0.75),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    });
+                                              });
                                         });
                                   }),
                               ValueListenableBuilder<bool>(
@@ -537,9 +675,11 @@ class _SingleGroupItemState extends State<SingleGroupItem> {
                                             }
                                           }
                                         } else {
-                                          MiscImpl().openLink(
-                                            widget.groupDetails['Link'],
-                                          );
+                                          showCustomCupertinoDialog(
+                                              context: context,
+                                              title: 'Leave App?',
+                                              message:
+                                                  'You are about to open an external link');
                                         }
                                       },
                                       child: Card(

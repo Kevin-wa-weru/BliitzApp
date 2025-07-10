@@ -298,8 +298,10 @@ class _PromoteScreenState extends State<PromoteScreen> {
                 .doc(widget.linkId)
                 .update({'promoted': true});
 
-            context.read<GetOwnersLinksCubit>().getLinks();
-            context.read<GetLinksCubit>().getLinks('Explore', false);
+            context.read<GetOwnersLinksCubit>().getLinks('Facebook');
+            context
+                .read<GetLinksCubit>()
+                .getLinks('Explore', false, 'Facebook');
           }
         } catch (e) {
           _safeShowMessage("✅ Purchase was successful $e");

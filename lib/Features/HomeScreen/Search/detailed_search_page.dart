@@ -5,10 +5,12 @@ import 'package:bliitz/Features/HomeScreen/Search/cubit/get_search_results.dart'
 import 'package:bliitz/Features/HomeScreen/LinkPages/owner_link_info.dart';
 import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:octo_image/octo_image.dart';
 
 class SearchCommunityScreen extends StatefulWidget {
   const SearchCommunityScreen({super.key});
@@ -172,12 +174,13 @@ class _SearchCommunityScreenState extends State<SearchCommunityScreen> {
                                                 groupDetails: e),
                                           )
                                           .toList(),
-                                    )
+                                    ),
+                                    const SizedBox(height: 12),
                                   ],
                                 );
                               }
                             }),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
                         ValueListenableBuilder<List<Map<String, dynamic>>>(
                             valueListenable: _suggestedSearches,
                             builder: (context, suggested, child) {
@@ -375,47 +378,111 @@ class _SearchCommunityScreenState extends State<SearchCommunityScreen> {
             );
           }
         },
-        child: Column(
+        child: Row(
           children: [
-            Row(
-              children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${groupDetails['Name']} - ${groupDetails['Link Type']}',
-                          style: TextStyle(
-                              overflow: TextOverflow.ellipsis,
-                              fontFamily: 'Poppins',
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500),
+            groupDetails['Profile Image'] == null ||
+                    groupDetails['Profile Image'] == ''
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      color: const Color(0xFF141312),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/icons/person.svg',
+                          height: 16,
+                          width: 16,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white.withOpacity(.3),
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
-                      if (groupDetails['promoted'] != null &&
-                          groupDetails['promoted']) ...[
-                        const SizedBox(width: 8),
-                        const Icon(Icons.verified,
-                            color: Colors.green, size: 16)
-                      ],
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: OctoImage(
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      image: CachedNetworkImageProvider(
+                          groupDetails['Profile Image']),
+                      progressIndicatorBuilder: (context, p) {
+                        double? value;
+                        final expectedBytes = p?.expectedTotalBytes;
+                        if (p != null && expectedBytes != null) {
+                          value = p.cumulativeBytesLoaded / expectedBytes;
+                        }
+                        return SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Align(
+                            child: CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 2,
+                              backgroundColor: Colors.white.withOpacity(0.12),
+                              color: const Color(0xFF141312),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stacktrace) =>
+                          const Icon(Icons.error),
+                    ),
+                  ),
+            Padding(
+              padding: const EdgeInsets.only(left: 12.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.7),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${groupDetails['Name']} - ${groupDetails['Link Type']}',
+                                style: TextStyle(
+                                    overflow: TextOverflow.ellipsis,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            if (groupDetails['promoted'] != null &&
+                                groupDetails['promoted']) ...[
+                              const SizedBox(width: 8),
+                              const Icon(Icons.verified,
+                                  color: Colors.green, size: 16)
+                            ],
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 4,
-            ),
-            Row(
-              children: [
-                Text(
-                  '${groupDetails['favourites'].toString()} Favorities',
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
-                ),
-              ],
+                  const SizedBox(
+                    height: 4,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        color: Colors.transparent,
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        child: Text(
+                          '${groupDetails['favourites'].toString()} Favorities',
+                          style: const TextStyle(
+                              color: Colors.white60, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

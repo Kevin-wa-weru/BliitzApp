@@ -4,7 +4,6 @@ import 'package:bliitz/Features/HomeScreen/Profile/cubit/get_pofile_details_cubi
 import 'package:bliitz/Features/HomeScreen/Explore/explore_page.dart';
 import 'package:bliitz/Features/HomeScreen/Profile/user_profile_page.dart';
 import 'package:bliitz/Features/HomeScreen/Search/search_page.dart';
-import 'package:bliitz/services/payment_services.dart';
 import 'package:bliitz/widgets/bottom_nav_bar.dart';
 import 'package:bliitz/services/link_services.dart';
 import 'package:bliitz/utils/_index.dart';
@@ -43,32 +42,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getCategories() async {
     var localCategories = await MiscImpl().fetchLocalCategoryCounts();
-
     gridItems.value = localCategories;
-  }
-
-  initStoreInfo() async {
-    await PaymentServicesImpl().initStoreInfo();
-
-    await PaymentServicesImpl().getActivePurchases();
   }
 
   @override
   void initState() {
     super.initState();
 
-    initStoreInfo();
-
     _pageNotifier.addListener(() {
       _pageController.jumpToPage(_pageNotifier.value);
     });
-    context.read<GetLinksCubit>().getLinks('Explore', false);
+    context.read<GetLinksCubit>().getLinks('Explore', false, 'Facebook');
     final profileCubit = context.read<GetProfileDetailsCubit>();
     final linksCubit = context.read<GetOwnersLinksCubit>();
 
     profileCubit.stream.listen((state) {
       if (state is GetProfileDetailsStateLoaded) {
-        linksCubit.getLinks();
+        linksCubit.getLinks('Facebook');
       }
     });
 

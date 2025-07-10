@@ -61,6 +61,7 @@ abstract class Misc {
   Future<void> trackLinkImpression(
       {required String linkId, required String linkCreatorId});
   String resolvePlanTitle({required String planId});
+  String detectSocialApp(String url);
 }
 
 class MiscImpl implements Misc {
@@ -374,7 +375,7 @@ class MiscImpl implements Misc {
         'iconPath': 'assets/icons/wechat.svg',
       },
       {
-        'name': 'X',
+        'name': 'Twitter (X)',
         'iconPath': 'assets/icons/x.svg',
       },
     ];
@@ -1122,4 +1123,129 @@ class MiscImpl implements Misc {
 
     return tierName + suffix;
   }
+
+  @override
+  String detectSocialApp(String url) {
+    final platformPatterns = {
+      'Whatsapp':
+          RegExp(r'^https?:\/\/(www\.)?chat\.whatsapp\.com\/[A-Za-z0-9]+$'),
+      'Instagram':
+          RegExp(r'^https?:\/\/(www\.)?instagram\.com\/[A-Za-z0-9_.]+\/?$'),
+      'Twitter (X)':
+          RegExp(r'^https?:\/\/(www\.)?twitter\.com\/i\/communities\/[0-9]+$'),
+      // RegExp(r'^https?:\/\/(www\.)?twitter\.com\/[A-Za-z0-9_]{1,15}$'),
+      'Telegram':
+          RegExp(r'^https?:\/\/(www\.)?t\.me\/(joinchat\/|\+)[A-Za-z0-9_-]+$'),
+      'VK':
+          RegExp(r'^https?:\/\/(www\.)?vk\.com\/(public|club|groups)\/[0-9]+$'),
+      'Facebook': RegExp(
+          r'^https?:\/\/(www\.)?facebook\.com\/(groups|pages)\/[A-Za-z0-9._-]+$'),
+      'Discord': RegExp(
+          r'^https?:\/\/(www\.)?(discord\.gg|discord\.com\/invite)\/[A-Za-z0-9]+$'),
+      'Reddit': RegExp(r'^https?:\/\/(www\.)?reddit\.com\/r\/[A-Za-z0-9_]+$'),
+      'LinkedIn': RegExp(
+          r'^https?:\/\/(www\.)?linkedin\.com\/groups\/[A-Za-z0-9-_%]+\/?$'),
+      'YouTube': RegExp(
+          r'^https?:\/\/(www\.)?(youtube\.com\/(c\/|channel\/|@)|youtu\.be\/)[A-Za-z0-9_-]+$'),
+      'Pinterest': RegExp(
+          r'^https?:\/\/(www\.)?pinterest\.com\/[A-Za-z0-9_]+\/boards\/?$'),
+      'Snapchat':
+          RegExp(r'^https?:\/\/(www\.)?snapchat\.com\/add\/[A-Za-z0-9._]+$'),
+      'Threads': RegExp(r'^https?:\/\/(www\.)?threads\.net\/@[A-Za-z0-9._]+$'),
+      'TikTok': RegExp(r'^https?:\/\/(www\.)?tiktok\.com\/@[\w.]+\/live$'),
+      'Twitch': RegExp(r'^https?:\/\/(www\.)?twitch\.tv\/[A-Za-z0-9_]+$'),
+      'Vimeo':
+          RegExp(r'^https?:\/\/(www\.)?vimeo\.com\/channels\/[A-Za-z0-9_-]+$'),
+      'Medium': RegExp(r'^https?:\/\/(www\.)?medium\.com\/@[A-Za-z0-9._-]+$'),
+      'Quora':
+          RegExp(r'^https?:\/\/(www\.)?quora\.com\/profile\/[A-Za-z0-9_-]+$'),
+      'GitHub': RegExp(r'^https?:\/\/(www\.)?github\.com\/[A-Za-z0-9_.-]+\/?$'),
+      'Dribbble': RegExp(r'^https?:\/\/(www\.)?dribbble\.com\/[A-Za-z0-9_-]+$'),
+      'Behance': RegExp(r'^https?:\/\/(www\.)?behance\.net\/[A-Za-z0-9_-]+$'),
+      'Flickr':
+          RegExp(r'^https?:\/\/(www\.)?flickr\.com\/groups\/[A-Za-z0-9@]+$'),
+      'Bandcamp': RegExp(r'^https?:\/\/[A-Za-z0-9_-]+\.bandcamp\.com\/?$'),
+      'Patreon': RegExp(r'^https?:\/\/(www\.)?patreon\.com\/[A-Za-z0-9_-]+$'),
+      'Ko-fi': RegExp(
+          r'^https?:\/\/(www\.)?(ko-fi\.com|kofi\.com)\/[A-Za-z0-9_-]+$'),
+      'Kick': RegExp(r'^https?:\/\/(www\.)?kick\.com\/[A-Za-z0-9_]+$'),
+      'Skype': RegExp(r'^https?:\/\/join\.skype\.com\/[A-Za-z0-9]+$'),
+      'Zoom': RegExp(r'^https?:\/\/(www\.)?zoom\.us\/j\/[0-9]+$'),
+      'Slack': RegExp(
+          r'^https?:\/\/[A-Za-z0-9_-]+\.slack\.com\/join\/[A-Za-z0-9]+$'),
+      'Signal': RegExp(r'^https?:\/\/signal\.org\/invite\/[A-Za-z0-9]+$'),
+      'LINE': RegExp(r'^https?:\/\/line\.me\/R\/ti\/g\/[A-Za-z0-9]+$'),
+      'Viber': RegExp(r'^https?:\/\/invite\.viber\.com\/\?g2=[A-Za-z0-9]+$'),
+      'We-chat': RegExp(r'^https?:\/\/weixin\.qq\.com\/[A-Za-z0-9]+$'),
+      'Clubhouse': RegExp(
+          r'^https?:\/\/(www\.)?joinclubhouse\.com\/club\/[A-Za-z0-9_-]+$'),
+      'SoundCloud':
+          RegExp(r'^https?:\/\/(www\.)?soundcloud\.com\/[A-Za-z0-9_-]+$'),
+      'Tumblr': RegExp(r'^https?:\/\/[A-Za-z0-9_-]+\.tumblr\.com\/?$'),
+      // Optional or ambiguous:
+      // 'Messenger': RegExp(r'^https?:\/\/(www\.)?messenger\.com\/t\/[A-Za-z0-9_.]+$'),
+      // 'Google Meet': RegExp(r'^https?:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$'),
+    };
+
+    for (final entry in platformPatterns.entries) {
+      if (entry.value.hasMatch(url)) {
+        return entry.key;
+      }
+    }
+
+    return 'Unknown Channel/Group/Page';
+  }
+
+  // final uri = Uri.tryParse(url.toLowerCase());
+
+  // if (uri == null || uri.host.isEmpty) return "Unknown";
+
+  // final host = uri.host;
+
+  // if (host.contains('nstagram.com')) return "Instagram";
+  // if (host.contains('facebook.com') || host.contains('fb.com'))
+  //   return "Facebook";
+  // if (host.contains('twitter.com') || host.contains('x.com'))
+  //   return "Twitter (X)";
+  // if (host.contains('tiktok.com')) return "TikTok";
+  // if (host.contains('linkedin.com')) return "LinkedIn";
+  // if (host.contains('snapchat.com')) return "Snapchat";
+  // if (host.contains('youtube.com') || host.contains('youtu.be'))
+  //   return "YouTube";
+  // if (host.contains('pinterest.com')) return "Pinterest";
+  // if (host.contains('reddit.com')) return "Reddit";
+  // if (host.contains('threads.net')) return "Threads";
+  // if (host.contains('discord.com') || host.contains('discord.gg'))
+  //   return "Discord";
+  // if (host.contains('tumblr.com')) return "Tumblr";
+  // if (host.contains('telegram.org') || host.contains('t.me'))
+  //   return "Telegram";
+  // if (host.contains('whatsapp.com') || host.contains('wa.me'))
+  //   return "WhatsApp";
+  // if (host.contains('wechat.com')) return "WeChat";
+  // if (host.contains('viber.com')) return "Viber";
+  // if (host.contains('line.me')) return "LINE";
+  // if (host.contains('quora.com')) return "Quora";
+  // if (host.contains('medium.com')) return "Medium";
+  // if (host.contains('github.com')) return "GitHub";
+  // if (host.contains('dribbble.com')) return "Dribbble";
+  // if (host.contains('behance.net')) return "Behance";
+  // if (host.contains('flickr.com')) return "Flickr";
+  // if (host.contains('vimeo.com')) return "Vimeo";
+  // if (host.contains('clubhouse.com')) return "Clubhouse";
+  // if (host.contains('soundcloud.com')) return "SoundCloud";
+  // if (host.contains('bandcamp.com')) return "Bandcamp";
+  // if (host.contains('patreon.com')) return "Patreon";
+  // if (host.contains('kofi.com') || host.contains('ko-fi.com')) return "Ko-fi";
+  // if (host.contains('twitch.tv')) return "Twitch";
+  // if (host.contains('kick.com')) return "Kick";
+  // if (host.contains('snap.com')) return "Snap";
+  // if (host.contains('skype.com')) return "Skype";
+  // if (host.contains('messenger.com')) return "Facebook Messenger";
+  // if (host.contains('meet.google.com')) return "Google Meet";
+  // if (host.contains('zoom.us')) return "Zoom";
+  // if (host.contains('slack.com')) return "Slack";
+  // if (host.contains('signal.org')) return "Signal";
+
+  // return "Unknown";
 }

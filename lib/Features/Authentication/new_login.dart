@@ -5,6 +5,7 @@ import 'package:bliitz/Features/Policy%20Documents/privacy_policy_page.dart';
 import 'package:bliitz/services/auth_services.dart';
 import 'package:bliitz/Features/Policy%20Documents/terms_condtions_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -283,11 +284,28 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                                 color: Colors.green),
                                             recognizer: TapGestureRecognizer()
                                               ..onTap = () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const TermsAndConditions()),
+                                                Navigator.of(context).push(
+                                                  PageRouteBuilder(
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 300),
+                                                    pageBuilder: (context,
+                                                            animation,
+                                                            secondaryAnimation) =>
+                                                        const TermsAndConditions(),
+                                                    transitionsBuilder:
+                                                        (context,
+                                                            animation,
+                                                            secondaryAnimation,
+                                                            child) {
+                                                      return FadeTransition(
+                                                        opacity: animation,
+                                                        child: child,
+                                                      );
+                                                    },
+                                                    opaque: true,
+                                                    barrierColor: Colors.black,
+                                                  ),
                                                 );
                                               },
                                           ),
@@ -301,11 +319,28 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                                             text: "privacy policy",
                                             recognizer: TapGestureRecognizer()
                                               ..onTap = () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const PrivacyPoliciy()),
+                                                Navigator.of(context).push(
+                                                  PageRouteBuilder(
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 300),
+                                                    pageBuilder: (context,
+                                                            animation,
+                                                            secondaryAnimation) =>
+                                                        const PrivacyPoliciy(),
+                                                    transitionsBuilder:
+                                                        (context,
+                                                            animation,
+                                                            secondaryAnimation,
+                                                            child) {
+                                                      return FadeTransition(
+                                                        opacity: animation,
+                                                        child: child,
+                                                      );
+                                                    },
+                                                    opaque: true,
+                                                    barrierColor: Colors.black,
+                                                  ),
                                                 );
                                               },
                                           ),
@@ -359,6 +394,9 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                     debugPrint(
                         'Signed in asss: ${userCredential.user?.displayName.toString()}');
 
+                    FirebaseMessaging messaging = FirebaseMessaging.instance;
+                    String? token = await messaging.getToken();
+
                     await FirebaseFirestore.instance
                         .collection('Users')
                         .doc(userCredential.user!.uid)
@@ -375,11 +413,24 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                       'verified': false,
                       'paymentPlanId': '',
                       'purchaseverificationData': '',
+                      'fcmToken': token,
                     }, SetOptions(merge: true));
                     _isLoading.value == false;
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    Navigator.of(context).pushReplacement(
+                      PageRouteBuilder(
+                        transitionDuration: const Duration(milliseconds: 300),
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const HomeScreen(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        opaque: true,
+                        barrierColor: Colors.black,
+                      ),
                     );
                   } catch (e) {
                     _isLoading.value == false;

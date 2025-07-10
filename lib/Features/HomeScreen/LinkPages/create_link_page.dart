@@ -10,7 +10,6 @@ import 'package:bliitz/utils/check_internet.dart';
 import 'package:bliitz/utils/misc.dart';
 import 'package:bliitz/widgets/custom_loader.dart';
 import 'package:bliitz/widgets/photo_grid_view.dart';
-import 'package:bliitz/widgets/social_chips.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,6 +41,9 @@ class _CreateGroupPageState extends State<CreateGroupPage>
   final ValueNotifier<String> selectedLinkType = ValueNotifier<String>('');
   final ValueNotifier<String> selectedCategory = ValueNotifier<String>('');
   final ValueNotifier<bool> _linkIsInvalid = ValueNotifier<bool>(true);
+  final ValueNotifier<String> _detectedSocial = ValueNotifier<String>('');
+  final ValueNotifier<bool> _showMinimumCharactersLabel =
+      ValueNotifier<bool>(false);
 
   final ValueNotifier<String> selectedSocial = ValueNotifier<String>('');
 
@@ -121,6 +123,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
     if (_linkController.text.isNotEmpty &&
         !MiscImpl().isValidUrl(_linkController.text)) {
       _linkIsInvalid.value = false;
+      _detectedSocial.value = '';
     }
 
     if (_linkController.text.isNotEmpty &&
@@ -148,7 +151,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
       }
     }
 
-    if (selectedSocial.value.isEmpty &&
+    if (_detectedSocial.value.isEmpty &&
         _nameController.text.isNotEmpty &&
         _linkController.text.isNotEmpty &&
         MiscImpl().isValidUrl(_linkController.text) &&
@@ -162,7 +165,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
           child: AlertDialog(
             backgroundColor: Colors.black,
             title: Text(
-              "Missing Field",
+              "Link not supported",
               style: TextStyle(
                 color: Colors.white.withOpacity(.8),
                 fontWeight: FontWeight.w400,
@@ -172,7 +175,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
               ),
             ),
             content: Text(
-              "Kindly select the social app before proceeding",
+              "The social app link you have provided is not supported in bliitz",
               style: TextStyle(
                 color: Colors.white.withOpacity(.6),
                 fontWeight: FontWeight.w400,
@@ -195,12 +198,14 @@ class _CreateGroupPageState extends State<CreateGroupPage>
       );
     }
 
-    if (selectedSocial.value.isNotEmpty &&
+    if (_detectedSocial.value.isNotEmpty &&
+        _detectedSocial.value != 'Unknown Channel/Group/Page' &&
         _nameController.text.isNotEmpty &&
         _linkController.text.isNotEmpty &&
         MiscImpl().isValidUrl(_linkController.text) &&
         selectedLinkType.value.isNotEmpty &&
         _descriptionController.text.isNotEmpty &&
+        !_showMinimumCharactersLabel.value &&
         selectedCategory.value.isNotEmpty) {
       bool isConnected = await ConnectivityHelper.isConnected();
       if (!isConnected) {
@@ -213,7 +218,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
 
       if (_selectedPhoto == null) {
         Future<bool> uploaded = LinkServicesImpl().uploadAndSaveLink(
-            social: selectedSocial.value,
+            social: _detectedSocial.value,
             name: _nameController.text,
             link: _linkController.text,
             linkType: selectedLinkType.value,
@@ -242,7 +247,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                 .filtertLinksBySocialAndCatgory(
                     widget.preselectedSocialType!, widget.preselectedCategory!);
           }
-          context.read<GetOwnersLinksCubit>().getLinks();
+          context.read<GetOwnersLinksCubit>().getLinks('Facebook');
         } else {
           Navigator.pop(context);
           ScaffoldMessenger.of(context)
@@ -251,7 +256,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
       } else {
         Future<bool> uploaded = LinkServicesImpl().uploadAndSaveLink(
             imageFile: await _selectedPhoto?.file,
-            social: selectedSocial.value,
+            social: _detectedSocial.value,
             name: _nameController.text,
             link: _linkController.text,
             linkType: selectedLinkType.value,
@@ -281,7 +286,7 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                 .filtertLinksBySocialAndCatgory(
                     widget.preselectedSocialType!, widget.preselectedCategory!);
           }
-          context.read<GetOwnersLinksCubit>().getLinks();
+          context.read<GetOwnersLinksCubit>().getLinks('Facebook');
         } else {
           Navigator.pop(context);
           ScaffoldMessenger.of(context)
@@ -422,23 +427,23 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                   const SizedBox(
                     height: 16,
                   ),
-                  !widget.isFromProfilePage
-                      ? const SizedBox.shrink()
-                      : Column(
-                          children: [
-                            SocialChips(
-                              isProfilePage: false,
-                              selectedSocial: selectedSocial,
-                              currentPage: 'Create Group',
-                            ),
-                            const SizedBox(
-                              height: 16,
-                            ),
-                          ],
-                        ),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  // !widget.isFromProfilePage
+                  //     ? const SizedBox.shrink()
+                  //     : Column(
+                  //         children: [
+                  //           SocialChips(
+                  //             isProfilePage: false,
+                  //             selectedSocial: selectedSocial,
+                  //             currentPage: 'Create Group',
+                  //           ),
+                  //           const SizedBox(
+                  //             height: 16,
+                  //           ),
+                  //         ],
+                  //       ),
+                  // const SizedBox(
+                  //   height: 16,
+                  // ),
                   Row(
                     children: [
                       Padding(
@@ -582,6 +587,21 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                                     MiscImpl().isValidUrl(
                                                         _linkController.text)) {
                                                   _linkIsInvalid.value = true;
+                                                  _detectedSocial.value =
+                                                      MiscImpl()
+                                                          .detectSocialApp(
+                                                              _linkController
+                                                                  .text);
+
+                                                  print(
+                                                      'Vwalaa ${_detectedSocial.value}');
+                                                }
+
+                                                if (_linkController
+                                                        .text.isNotEmpty &&
+                                                    !MiscImpl().isValidUrl(
+                                                        _linkController.text)) {
+                                                  _detectedSocial.value = '';
                                                 }
                                               },
                                               controller: _linkController,
@@ -680,6 +700,34 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                 ),
                               );
                       }),
+                  ValueListenableBuilder<String>(
+                      valueListenable: _detectedSocial,
+                      builder: (context, socialApp, _) {
+                        return socialApp.isEmpty
+                            ? const SizedBox.shrink()
+                            : Padding(
+                                padding: const EdgeInsets.only(right: 36.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      socialApp,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: socialApp ==
+                                                'Unknown Channel/Group/Page'
+                                            ? Colors.red
+                                            : const Color(0xCC01DE27),
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: 'Questrial',
+                                        letterSpacing: 0.3,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                      }),
                   const SizedBox(
                     height: 22,
                   ),
@@ -711,9 +759,13 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                       child: Text(
                                         'Group',
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
+                                          color: selectedLink == 'Group'
+                                              ? Colors.black
+                                              : Colors.white.withOpacity(0.8),
                                           fontFamily: 'Questrial',
-                                          fontWeight: FontWeight.w300,
+                                          fontWeight: selectedLink == 'Group'
+                                              ? FontWeight.w600
+                                              : FontWeight.w300,
                                           fontSize: 12,
                                           letterSpacing: 0.5,
                                           height: 1.2,
@@ -745,9 +797,13 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                       child: Text(
                                         'Channel',
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
+                                          color: selectedLink == 'Channel'
+                                              ? Colors.black
+                                              : Colors.white.withOpacity(0.8),
                                           fontFamily: 'Questrial',
-                                          fontWeight: FontWeight.w300,
+                                          fontWeight: selectedLink == 'Channel'
+                                              ? FontWeight.w600
+                                              : FontWeight.w300,
                                           fontSize: 12,
                                           letterSpacing: 0.5,
                                           height: 1.2,
@@ -779,9 +835,13 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                                       child: Text(
                                         'Page',
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
+                                          color: selectedLink == 'Page'
+                                              ? Colors.black
+                                              : Colors.white.withOpacity(0.8),
                                           fontFamily: 'Questrial',
-                                          fontWeight: FontWeight.w300,
+                                          fontWeight: selectedLink == 'Page'
+                                              ? FontWeight.w600
+                                              : FontWeight.w300,
                                           fontSize: 12,
                                           letterSpacing: 0.5,
                                           height: 1.2,
@@ -804,9 +864,17 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                         animation: _glowAnimationThree,
                         builder: (context, child) {
                           return TextField(
-                            maxLength: 100,
+                            maxLength: 200,
                             controller: _descriptionController,
                             maxLines: 5,
+                            onChanged: (value) {
+                              if (value.isNotEmpty && value.length < 100) {
+                                _showMinimumCharactersLabel.value = true;
+                              }
+                              if (value.length > 100) {
+                                _showMinimumCharactersLabel.value = false;
+                              }
+                            },
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
@@ -847,8 +915,37 @@ class _CreateGroupPageState extends State<CreateGroupPage>
                         }),
                   ),
                   const SizedBox(
-                    height: 16,
+                    height: 4,
                   ),
+                  ValueListenableBuilder<bool>(
+                      valueListenable: _showMinimumCharactersLabel,
+                      builder: (context, showLabel, _) {
+                        return !showLabel
+                            ? const SizedBox.shrink()
+                            : Transform.translate(
+                                offset: const Offset(0, -20),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 28.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Minimum of 100 characters required',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'Questrial',
+                                          letterSpacing: 0.3,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                      }),
+
                   !widget.isFromProfilePage
                       ? const SizedBox.shrink()
                       : Center(
@@ -963,9 +1060,13 @@ class SingleChip extends StatelessWidget {
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: selectedCateg == title
+                            ? const Color(0xFF141312)
+                            : Colors.white.withOpacity(0.8),
                         fontFamily: 'Questrial',
-                        fontWeight: FontWeight.w300,
+                        fontWeight: selectedCateg == title
+                            ? FontWeight.w600
+                            : FontWeight.w300,
                         fontSize: 12,
                         letterSpacing: 0.5,
                         height: 1.2,

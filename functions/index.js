@@ -201,6 +201,41 @@ exports.consumeOneTimeProduct = functions.https.
       }
     });
 
+// Cancel subscription
+exports.cancelSubscription =
+ functions.https.onCall(async (data, context) => {
+   const {purchaseToken, subscriptionId, packageName} = data;
+
+   if (!purchaseToken || !subscriptionId || !packageName) {
+     throw new functions.https.
+         HttpsError("invalid-argument", "Missing parameters.");
+   }
+
+   try {
+     const authClient = await auth.getClient();
+     const androidpublisher = google.androidpublisher({
+       version: "v3",
+       auth: authClient,
+     });
+
+     await androidpublisher.purchases.
+         subscriptions.cancel({
+           packageName,
+           subscriptionId,
+           token: purchaseToken,
+         });
+
+     return {success: true};
+   } catch (error) {
+     console.
+         error("Subscription cancellation error:",
+             error);
+     throw new functions.https.HttpsError("unknown",
+         "Failed to cancel subscription.");
+   }
+ });
+
+
 // Function for feed personlisation
 exports.fetchUserPersonalizedFeed = functions.https.
     onCall(async (data, context) => {
@@ -451,3 +486,4 @@ exports.fetchSearchSuggestions = functions.https.
             "Error fetching search suggestions.");
       }
     });
+

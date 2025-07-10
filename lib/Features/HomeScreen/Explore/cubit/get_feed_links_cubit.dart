@@ -11,12 +11,19 @@ class GetLinksCubit extends Cubit<GetLinksState> {
 
   late LinkServices _linkServices;
 
-  Future<void> getLinks(String currentpage, bool isUserLinks) async {
+  Future<void> getLinks(
+      String currentpage, bool isUserLinks, String socialType) async {
     emit(GetLinksStateLoading());
 
-    var response = await _linkServices.fetchUserPersonalizedFeed();
-
-    emit(GetLinksStateLoaded(response, currentPage: currentpage));
+    if (socialType == 'Facebook') {
+      var response = await _linkServices.fetchUserFeedFromCloud(
+          limit: 20, fetchFirstSocial: true);
+      emit(GetLinksStateLoaded(response, currentPage: currentpage));
+    } else {
+      var response = await _linkServices.fetchUserFeedFromCloud(
+          limit: 20, fetchFirstSocial: false);
+      emit(GetLinksStateLoaded(response, currentPage: currentpage));
+    }
   }
 
   Future<void> filtertLinksByType(

@@ -29,13 +29,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
+      body: RefreshIndicator(
+        backgroundColor: const Color(0xFF1E1D1C),
+        color: const Color(0xCC01DE27),
+        onRefresh: () async {
+          context
+              .read<GetBackgroundNotificationsCubit>()
+              .getBackgroundNotifications();
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           children: [
-            const SizedBox(
-              height: 40,
-            ),
+            const SizedBox(height: 40),
+            // Back button and title
             Row(
               children: [
                 GestureDetector(
@@ -47,16 +54,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     width: Adapt.px(80),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(.08),
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(100.0),
-                      ),
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(100.0)),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white60,
-                        size: 20,
-                      ),
+                      child: Icon(Icons.arrow_back,
+                          color: Colors.white60, size: 20),
                     ),
                   ),
                 ),
@@ -92,86 +95,61 @@ class _NotificationScreenState extends State<NotificationScreen> {
             const SizedBox(
               height: 16,
             ),
-            MediaQuery.removePadding(
-              context: context,
-              removeBottom: true,
-              removeTop: true,
-              child: BlocConsumer<GetBackgroundNotificationsCubit,
-                  GetBackgroundNotificationsState>(
-                listener: (context, state) {},
-                builder: (context, state) {
-                  if (state is GetBackgroundNotificationsStateLoaded) {
-                    if (state.backgroundNotifications.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(height: Adapt.screenH() * .27),
-                            SvgPicture.asset(
-                              'assets/icons/sad.svg',
-                              height: 24,
-                              width: 24,
-                              colorFilter: ColorFilter.mode(
-                                Colors.white.withOpacity(0.4),
-                                BlendMode.srcIn,
-                              ),
+            BlocConsumer<GetBackgroundNotificationsCubit,
+                GetBackgroundNotificationsState>(
+              listener: (context, state) {},
+              builder: (context, state) {
+                if (state is GetBackgroundNotificationsStateLoaded) {
+                  if (state.backgroundNotifications.isEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.only(top: Adapt.screenH() * .2),
+                      child: Column(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/sad.svg',
+                            height: 24,
+                            width: 24,
+                            colorFilter: ColorFilter.mode(
+                              Colors.white.withOpacity(0.4),
+                              BlendMode.srcIn,
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 16.0),
-                              child: Center(
-                                child: Text(
-                                  'Looks like there are no notifications yet. Stay tuned!',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontFamily: 'Questrial',
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 14,
-                                    letterSpacing: 0.5,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else {
-                      return Expanded(
-                        child: MediaQuery.removePadding(
-                          context: context,
-                          removeBottom: true,
-                          removeTop: true,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.only(bottom: 60.0),
-                            itemCount: state.backgroundNotifications.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return NotificationItem(
-                                title:
-                                    state.backgroundNotifications[index].title!,
-                                subtitle: state
-                                    .backgroundNotifications[index].message!,
-                              );
-                            },
                           ),
-                        ),
-                      );
-                    }
-                  }
-                  if (state is GetBackgroundNotificationsStateLoading) {
-                    return Expanded(
-                      child: ListView(
-                          children: [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5]
-                              .map((e) => const NotificationItemSkeleton())
-                              .toList()),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Looks like there are no notifications yet. Stay tuned!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Questrial',
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
-                  } else {
-                    return const SizedBox.shrink();
                   }
-                },
-              ),
-            )
+
+                  return Column(
+                    children: state.backgroundNotifications
+                        .map((notif) => NotificationItem(
+                              title: notif.title!,
+                              subtitle: notif.message!,
+                            ))
+                        .toList(),
+                  );
+                }
+
+                if (state is GetBackgroundNotificationsStateLoading) {
+                  return Column(
+                    children: List.generate(
+                        6, (index) => const NotificationItemSkeleton()),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+            const SizedBox(height: 60),
           ],
         ),
       ),

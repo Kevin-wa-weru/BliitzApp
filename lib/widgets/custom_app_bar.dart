@@ -106,309 +106,328 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 16.0),
-                    child: PopupMenuButton<String>(
-                      offset: const Offset(150, -20),
-                      icon: Transform.rotate(
-                        angle: -math.pi / 2,
-                        child: SvgPicture.asset(
-                          'assets/icons/filter.svg',
-                          height: 24,
-                          width: 24,
-                          colorFilter: ColorFilter.mode(
-                            Colors.white.withOpacity(0.7),
-                            BlendMode.srcIn,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        popupMenuTheme: PopupMenuThemeData(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(
+                              color:
+                                  Colors.white.withOpacity(0.5), // Border color
+                              width: 1.2, // Border width
+                            ),
                           ),
+                          color: Colors.black, // Background color of the popup
                         ),
                       ),
-                      onSelected: (value) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Selected: $value')),
-                        );
-                      },
-                      onOpened: () {
-                        widget.isPopupOpen.value = true;
-                      },
-                      onCanceled: () {
-                        widget.isPopupOpen.value = false;
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          height: 16,
-                          child: Center(
-                            child: Container(
-                              color: Colors.transparent,
-                              width: 120,
-                              child: Center(
-                                child: Text(
-                                  'Filters',
-                                  style: TextStyle(
-                                    fontFamily: 'Questrial',
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    height: 1.5,
-                                    decorationColor:
-                                        Colors.white.withOpacity(0.75),
+                      child: PopupMenuButton<String>(
+                        offset: const Offset(150, -20),
+                        icon: Transform.rotate(
+                          angle: -math.pi / 2,
+                          child: SvgPicture.asset(
+                            'assets/icons/filter.svg',
+                            height: 24,
+                            width: 24,
+                            colorFilter: ColorFilter.mode(
+                              Colors.white.withOpacity(0.7),
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                        onSelected: (value) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Selected: $value')),
+                          );
+                        },
+                        onOpened: () {
+                          widget.isPopupOpen.value = true;
+                        },
+                        onCanceled: () {
+                          widget.isPopupOpen.value = false;
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            height: 16,
+                            child: Center(
+                              child: Container(
+                                color: Colors.transparent,
+                                width: 120,
+                                child: Center(
+                                  child: Text(
+                                    'Filters',
+                                    style: TextStyle(
+                                      fontFamily: 'Questrial',
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      height: 1.5,
+                                      decorationColor:
+                                          Colors.white.withOpacity(0.75),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          height: 24,
-                          child: ValueListenableBuilder<String>(
-                              valueListenable: selectedOption,
-                              builder: (context, value, child) {
-                                return Container(
-                                  color: Colors.transparent,
-                                  height: 32,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 12.0,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'All',
-                                          style: TextStyle(
-                                            fontFamily: 'Questrial',
-                                            color:
-                                                Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                            letterSpacing: 0.25,
-                                            height: 1.5,
-                                            decorationColor:
-                                                Colors.white.withOpacity(0.75),
+                          PopupMenuItem(
+                            height: 24,
+                            child: ValueListenableBuilder<String>(
+                                valueListenable: selectedOption,
+                                builder: (context, value, child) {
+                                  return Container(
+                                    color: Colors.transparent,
+                                    height: 32,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'All',
+                                            style: TextStyle(
+                                              fontFamily: 'Questrial',
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: 0.25,
+                                              height: 1.5,
+                                              decorationColor: Colors.white
+                                                  .withOpacity(0.75),
+                                            ),
                                           ),
-                                        ),
-                                        Transform.scale(
-                                          scale: 0.9,
-                                          child: Radio<String>(
-                                            value: 'All',
-                                            groupValue: value,
-                                            onChanged: (newValue) {
-                                              selectedOption.value = newValue!;
-                                            },
-                                            activeColor:
-                                                const Color(0xE601DE27),
+                                          Transform.scale(
+                                            scale: 0.9,
+                                            child: Radio<String>(
+                                              value: 'All',
+                                              groupValue: value,
+                                              onChanged: (newValue) {
+                                                selectedOption.value =
+                                                    newValue!;
+                                              },
+                                              activeColor:
+                                                  const Color(0xE601DE27),
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
+                                  );
+                                }),
+                          ),
+                          PopupMenuItem(
+                            height: 24,
+                            child: ValueListenableBuilder<String>(
+                                valueListenable: selectedOption,
+                                builder: (context, value, child) {
+                                  return Container(
+                                    color: Colors.transparent,
+                                    height: 32,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Channels',
+                                            style: TextStyle(
+                                              fontFamily: 'Questrial',
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: 0.25,
+                                              height: 1.5,
+                                              decorationColor: Colors.white
+                                                  .withOpacity(0.75),
+                                            ),
+                                          ),
+                                          Transform.scale(
+                                            scale: 0.9,
+                                            child: Radio<String>(
+                                              value: 'Channels',
+                                              groupValue: value,
+                                              onChanged: (newValue) {
+                                                selectedOption.value =
+                                                    newValue!;
+                                              },
+                                              activeColor:
+                                                  const Color(0xE601DE27),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                          PopupMenuItem(
+                            height: 24,
+                            child: ValueListenableBuilder<String>(
+                                valueListenable: selectedOption,
+                                builder: (context, value, child) {
+                                  return Container(
+                                    color: Colors.transparent,
+                                    height: 32,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Groups',
+                                            style: TextStyle(
+                                              fontFamily: 'Questrial',
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: 0.25,
+                                              height: 1.5,
+                                              decorationColor: Colors.white
+                                                  .withOpacity(0.75),
+                                            ),
+                                          ),
+                                          Transform.scale(
+                                            scale: 0.9,
+                                            child: Radio<String>(
+                                              value: 'Groups',
+                                              groupValue: value,
+                                              onChanged: (newValue) {
+                                                selectedOption.value =
+                                                    newValue!;
+                                              },
+                                              activeColor:
+                                                  const Color(0xE601DE27),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                          PopupMenuItem(
+                            height: 24,
+                            child: ValueListenableBuilder<String>(
+                                valueListenable: selectedOption,
+                                builder: (context, value, child) {
+                                  return Container(
+                                    color: Colors.transparent,
+                                    height: 32,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Pages',
+                                            style: TextStyle(
+                                              fontFamily: 'Questrial',
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              letterSpacing: 0.25,
+                                              height: 1.5,
+                                              decorationColor: Colors.white
+                                                  .withOpacity(0.75),
+                                            ),
+                                          ),
+                                          Transform.scale(
+                                            scale: 0.9,
+                                            child: Radio<String>(
+                                              value: 'Pages',
+                                              groupValue: value,
+                                              onChanged: (newValue) {
+                                                selectedOption.value =
+                                                    newValue!;
+                                              },
+                                              activeColor:
+                                                  const Color(0xE601DE27),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                          PopupMenuItem(
+                            height: 56,
+                            child: Center(
+                              child: SizedBox(
+                                height: 32,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xE601DE27),
                                   ),
-                                );
-                              }),
-                        ),
-                        PopupMenuItem(
-                          height: 24,
-                          child: ValueListenableBuilder<String>(
-                              valueListenable: selectedOption,
-                              builder: (context, value, child) {
-                                return Container(
-                                  color: Colors.transparent,
-                                  height: 32,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 12.0,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Channels',
-                                          style: TextStyle(
-                                            fontFamily: 'Questrial',
-                                            color:
-                                                Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                            letterSpacing: 0.25,
-                                            height: 1.5,
-                                            decorationColor:
-                                                Colors.white.withOpacity(0.75),
-                                          ),
-                                        ),
-                                        Transform.scale(
-                                          scale: 0.9,
-                                          child: Radio<String>(
-                                            value: 'Channels',
-                                            groupValue: value,
-                                            onChanged: (newValue) {
-                                              selectedOption.value = newValue!;
-                                            },
-                                            activeColor:
-                                                const Color(0xE601DE27),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }),
-                        ),
-                        PopupMenuItem(
-                          height: 24,
-                          child: ValueListenableBuilder<String>(
-                              valueListenable: selectedOption,
-                              builder: (context, value, child) {
-                                return Container(
-                                  color: Colors.transparent,
-                                  height: 32,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 12.0,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Groups',
-                                          style: TextStyle(
-                                            fontFamily: 'Questrial',
-                                            color:
-                                                Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                            letterSpacing: 0.25,
-                                            height: 1.5,
-                                            decorationColor:
-                                                Colors.white.withOpacity(0.75),
-                                          ),
-                                        ),
-                                        Transform.scale(
-                                          scale: 0.9,
-                                          child: Radio<String>(
-                                            value: 'Groups',
-                                            groupValue: value,
-                                            onChanged: (newValue) {
-                                              selectedOption.value = newValue!;
-                                            },
-                                            activeColor:
-                                                const Color(0xE601DE27),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }),
-                        ),
-                        PopupMenuItem(
-                          height: 24,
-                          child: ValueListenableBuilder<String>(
-                              valueListenable: selectedOption,
-                              builder: (context, value, child) {
-                                return Container(
-                                  color: Colors.transparent,
-                                  height: 32,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 12.0,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Pages',
-                                          style: TextStyle(
-                                            fontFamily: 'Questrial',
-                                            color:
-                                                Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                            letterSpacing: 0.25,
-                                            height: 1.5,
-                                            decorationColor:
-                                                Colors.white.withOpacity(0.75),
-                                          ),
-                                        ),
-                                        Transform.scale(
-                                          scale: 0.9,
-                                          child: Radio<String>(
-                                            value: 'Pages',
-                                            groupValue: value,
-                                            onChanged: (newValue) {
-                                              selectedOption.value = newValue!;
-                                            },
-                                            activeColor:
-                                                const Color(0xE601DE27),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }),
-                        ),
-                        PopupMenuItem(
-                          height: 56,
-                          child: Center(
-                            child: SizedBox(
-                              height: 32,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xE601DE27),
-                                ),
-                                onPressed: () async {
-                                  bool isConnected =
-                                      await ConnectivityHelper.isConnected();
-                                  if (!isConnected) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                            backgroundColor:
-                                                const Color(0xE601DE27)
-                                                    .withOpacity(.5),
-                                            content: const Text(
-                                                'No internet connection')));
-                                    Navigator.pop(context);
-                                    return;
-                                  }
+                                  onPressed: () async {
+                                    bool isConnected =
+                                        await ConnectivityHelper.isConnected();
+                                    if (!isConnected) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(
+                                              backgroundColor:
+                                                  const Color(0xE601DE27)
+                                                      .withOpacity(.5),
+                                              content: const Text(
+                                                  'No internet connection')));
+                                      Navigator.pop(context);
+                                      return;
+                                    }
 
-                                  if (widget.currentPage == 'Explore') {
-                                    Navigator.pop(context);
-                                    widget.isPopupOpen.value = false;
-                                    context
-                                        .read<GetLinksCubit>()
-                                        .filtertLinksByType(
-                                            selectedOption.value,
-                                            widget.currentPage,
-                                            false);
-                                  }
-                                  if (widget.currentPage == 'Profile') {
-                                    Navigator.pop(context);
-                                    widget.isPopupOpen.value = false;
-                                    context
-                                        .read<GetLinksCubit>()
-                                        .filtertLinksByType(
-                                            selectedOption.value,
-                                            widget.currentPage,
-                                            false);
-                                  }
-                                },
-                                child: const Text(
-                                  'Apply',
-                                  style: TextStyle(
-                                    fontFamily: 'Questrial',
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    letterSpacing: 0.5,
-                                    height: 1.2,
-                                    decorationColor: Colors.black,
+                                    if (widget.currentPage == 'Explore') {
+                                      Navigator.pop(context);
+                                      widget.isPopupOpen.value = false;
+                                      context
+                                          .read<GetLinksCubit>()
+                                          .filtertLinksByType(
+                                              selectedOption.value,
+                                              widget.currentPage,
+                                              false);
+                                    }
+                                    if (widget.currentPage == 'Profile') {
+                                      Navigator.pop(context);
+                                      widget.isPopupOpen.value = false;
+                                      context
+                                          .read<GetLinksCubit>()
+                                          .filtertLinksByType(
+                                              selectedOption.value,
+                                              widget.currentPage,
+                                              false);
+                                    }
+                                  },
+                                  child: const Text(
+                                    'Apply',
+                                    style: TextStyle(
+                                      fontFamily: 'Questrial',
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                      letterSpacing: 0.5,
+                                      height: 1.2,
+                                      decorationColor: Colors.black,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   Padding(

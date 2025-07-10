@@ -1,43 +1,44 @@
-import 'package:bliitz/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 abstract class ActionServices {
-  Future<Set<String>> fetchFavorites();
+  // Future<Map<String, Set<String>>> fetchUserLinkStatuses();
+
+  // Future<void> syncUserLinkActionsWithBackend();
+
   Future<void> addFavorite({required String linkId, required String creatorId});
   Future<void> removeFavorite(
       {required String linkId, required String creatorId});
-  Future<void> syncFavoritesWithBackend();
 
-  Future<Set<String>> fetchLikedLinks();
   Future<void> addLikedLinks(String linkId);
   Future<void> removeLikedLinks(String linkId);
-  Future<void> syncLikedLinksWithBackend();
 
-  Future<Set<String>> fetchDisLikedLinks();
   Future<void> addDisLikedLinks(String linkId);
   Future<void> removeDisLikedLinks(String linkId);
-  Future<void> syncDisLikedLinksWithBackend();
 
   Future<void> toggleFavoriteCount({
     required String linkId,
     required bool isAdding,
     required String creatorId,
   });
+
   Future<void> toggleLikeCount({
     required String linkId,
     required bool isAdding,
   });
+
   Future<void> toggleDisLikeCount({
     required String linkId,
     required bool isAdding,
   });
+
   Future<bool> reportAccount({
     required String reportedUserId,
     required String issueMessage,
   });
+
   Future<bool> sendNotifications({
     required String title,
     required String message,
@@ -45,19 +46,23 @@ abstract class ActionServices {
 }
 
 class ActionServicesImpl implements ActionServices {
-  @override
-  Future<Set<String>> fetchFavorites() async {
-    Set<String> favoriteLinkIds = {};
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('Favorites')
-        .get();
+  // @override
+  // Future<Map<String, Set<String>>> fetchUserLinkStatuses() async {
+  //   final userId = FirebaseAuth.instance.currentUser?.uid;
+  //   if (userId == null) return {};
 
-    favoriteLinkIds = snapshot.docs.map((doc) => doc.id).toSet();
-    return favoriteLinkIds;
-  }
+  //   final docSnapshot =
+  //       await FirebaseFirestore.instance.collection('Users').doc(userId).get();
+
+  //   final data = docSnapshot.data();
+  //   if (data == null) return {};
+
+  //   return {
+  //     'likedLinks': Set<String>.from(data['liked'] ?? []),
+  //     'favoritedLinks': Set<String>.from(data['favorites'] ?? []),
+  //     'dislikedLinks': Set<String>.from(data['disliked'] ?? []),
+  //   };
+  // }
 
   @override
   Future<void> addFavorite(
@@ -65,15 +70,12 @@ class ActionServicesImpl implements ActionServices {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId == null) return;
-    await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('Favorites')
-        .doc(linkId) // 👈 Use linkId as doc id
-        .set({
-      'linkId': linkId,
-      'addedAt': FieldValue.serverTimestamp(), // optional field
-    });
+    final userDocRef =
+        FirebaseFirestore.instance.collection('Users').doc(userId);
+
+    await userDocRef.set({
+      'favoritesLinks': FieldValue.arrayUnion([linkId]),
+    }, SetOptions(merge: true)); // merge keeps existing fields
 
     await ActionServicesImpl().toggleFavoriteCount(
         linkId: linkId, isAdding: true, creatorId: creatorId);
@@ -86,12 +88,12 @@ class ActionServicesImpl implements ActionServices {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userId)
-          .collection('Favorites')
-          .doc(linkId)
-          .delete();
+      final userDocRef =
+          FirebaseFirestore.instance.collection('Users').doc(userId);
+
+      await userDocRef.update({
+        'favoritesLinks': FieldValue.arrayRemove([linkId]),
+      });
 
       await ActionServicesImpl().toggleFavoriteCount(
           linkId: linkId, isAdding: false, creatorId: creatorId);
@@ -100,49 +102,57 @@ class ActionServicesImpl implements ActionServices {
     }
   }
 
-  @override
-  Future<void> syncFavoritesWithBackend() async {
-    var backendFavourites = await ActionServicesImpl().fetchFavorites();
+//   @override
+//   Future<void> syncUserLinkActionsWithBackend() async {
+//     final linkStatusMap = await ActionServicesImpl().fetchUserLinkStatuses();
 
-    var localFavourites = await MiscImpl().getFavoriteLinks();
-    final mergedFavourites = {...localFavourites, ...backendFavourites};
+//     final backendLikedLinks = linkStatusMap['liked'] ?? {};
+//     final backendFavourites = linkStatusMap['favorites'] ?? {};
+//     final backendDisLikedLinks = linkStatusMap['disliked'] ?? {};
 
-    localFavourites = mergedFavourites.toList();
+// //sync Favorites With Backend
+//     var localFavourites = await MiscImpl().getFavoriteLinks();
+//     final mergedFavourites = {...localFavourites, ...backendFavourites};
 
-    for (var i in localFavourites) {
-      await MiscImpl().addFavorite(i);
-    }
-  }
+//     localFavourites = mergedFavourites.toList();
 
-  //
-  @override
-  Future<Set<String>> fetchLikedLinks() async {
-    Set<String> likedLinkIds = {};
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('Liked')
-        .get();
+//     for (var i in localFavourites) {
+//       await MiscImpl().addFavorite(i);
+//     }
+// //sync Liked Links With Backend
+//     var localLikedLinks = await MiscImpl().getLikedLinks();
+//     final mergedLikedLinks = {...localLikedLinks, ...backendLikedLinks};
 
-    likedLinkIds = snapshot.docs.map((doc) => doc.id).toSet();
-    return likedLinkIds;
-  }
+//     localLikedLinks = mergedLikedLinks.toList();
+
+//     for (var i in localLikedLinks) {
+//       await MiscImpl().addLikedLinks(i);
+//     }
+// //sync Disliked With Backend
+//     var localDisLikedLinks = await MiscImpl().getDisLikedLinks();
+//     final mergedDisLikedLinks = {
+//       ...localDisLikedLinks,
+//       ...backendDisLikedLinks
+//     };
+
+//     localDisLikedLinks = mergedDisLikedLinks.toList();
+
+//     for (var i in localDisLikedLinks) {
+//       await MiscImpl().addDisLikedLinks(i);
+//     }
+//   }
 
   @override
   Future<void> addLikedLinks(String linkId) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId == null) return;
-    await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('Liked')
-        .doc(linkId) // 👈 Use linkId as doc id
-        .set({
-      'linkId': linkId,
-      'addedAt': FieldValue.serverTimestamp(), // optional field
-    });
+    final userDocRef =
+        FirebaseFirestore.instance.collection('Users').doc(userId);
+
+    await userDocRef.set({
+      'likedLinks': FieldValue.arrayUnion([linkId]),
+    }, SetOptions(merge: true)); // merge keeps existing fields
 
     await ActionServicesImpl().toggleLikeCount(linkId: linkId, isAdding: true);
   }
@@ -153,12 +163,12 @@ class ActionServicesImpl implements ActionServices {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userId)
-          .collection('Liked')
-          .doc(linkId)
-          .delete();
+      final userDocRef =
+          FirebaseFirestore.instance.collection('Users').doc(userId);
+
+      await userDocRef.update({
+        'likedLinks': FieldValue.arrayRemove([linkId]),
+      });
 
       await ActionServicesImpl()
           .toggleLikeCount(linkId: linkId, isAdding: false);
@@ -168,51 +178,15 @@ class ActionServicesImpl implements ActionServices {
   }
 
   @override
-  Future<void> syncLikedLinksWithBackend() async {
-    var backendLikedLinks = await ActionServicesImpl().fetchLikedLinks();
-
-    var localLikedLinks = await MiscImpl().getLikedLinks();
-    final mergedFavourites = {...localLikedLinks, ...backendLikedLinks};
-
-    localLikedLinks = mergedFavourites.toList();
-
-    for (var i in localLikedLinks) {
-      await MiscImpl().addLikedLinks(i);
-    }
-  }
-
-  //
-  @override
-  Future<Set<String>> fetchDisLikedLinks() async {
-    Set<String> dislikedLinkIds = {};
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('DisLiked')
-        .get();
-
-    dislikedLinkIds = snapshot.docs.map((doc) => doc.id).toSet();
-    return dislikedLinkIds;
-  }
-
-  @override
   Future<void> addDisLikedLinks(String linkId) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
-    if (userId == null) return;
-    await FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('DisLiked')
-        .doc(linkId) // 👈 Use linkId as doc id
-        .set({
-      'linkId': linkId,
-      'addedAt': FieldValue.serverTimestamp(), // optional field
-    });
+    final userDocRef =
+        FirebaseFirestore.instance.collection('Users').doc(userId);
 
-    await ActionServicesImpl()
-        .toggleDisLikeCount(linkId: linkId, isAdding: true);
+    await userDocRef.set({
+      'dislikedLinks': FieldValue.arrayUnion([linkId]),
+    }, SetOptions(merge: true)); // merge keeps existing fields
   }
 
   @override
@@ -220,32 +194,17 @@ class ActionServicesImpl implements ActionServices {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
+      final userDocRef =
+          FirebaseFirestore.instance.collection('Users').doc(userId);
 
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(userId)
-          .collection('DisLiked')
-          .doc(linkId)
-          .delete();
+      await userDocRef.update({
+        'dislikedLinks': FieldValue.arrayRemove([linkId]),
+      });
 
       await ActionServicesImpl()
           .toggleDisLikeCount(linkId: linkId, isAdding: false);
     } catch (e) {
       debugPrint('Hoalla $e');
-    }
-  }
-
-  @override
-  Future<void> syncDisLikedLinksWithBackend() async {
-    var backendDisLikedLinks = await ActionServicesImpl().fetchDisLikedLinks();
-
-    var localDisLikedLinks = await MiscImpl().getDisLikedLinks();
-    final mergedFavourites = {...localDisLikedLinks, ...backendDisLikedLinks};
-
-    localDisLikedLinks = mergedFavourites.toList();
-
-    for (var i in localDisLikedLinks) {
-      await MiscImpl().addDisLikedLinks(i);
     }
   }
 

@@ -12,16 +12,26 @@ class GetOwnersLinksCubit extends Cubit<GetOwnersLinksState> {
 
   late LinkServices _linkServices;
 
-  Future<void> getLinks() async {
+  Future<void> getLinks(
+    String socialType,
+  ) async {
     emit(GetOwnersLinksStateLoading());
     final userId = FirebaseAuth.instance.currentUser?.uid;
     var response = await _linkServices.fetchSpecificUserLinks(userId!);
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('totalCommunities', response.length.toString());
-
-    emit(GetOwnersLinksStateLoaded(
-      response,
-    ));
+    if (socialType == 'Facebook') {
+      var facebookLinks =
+          response.where((link) => link['socialType'] == 'Facebook').toList();
+      emit(GetOwnersLinksStateLoaded(
+        facebookLinks,
+      ));
+    } else {
+      emit(GetOwnersLinksStateLoaded(
+        response,
+      ));
+    }
   }
 
   Future<void> filtertLinksBySocial(

@@ -1,8 +1,9 @@
 import 'dart:io';
 
+import 'package:bliitz/services/payment_services.dart';
+import 'package:bliitz/utils/misc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -31,7 +32,7 @@ abstract class AuthServices {
   Future<void> checkAndPersistIfUserIsAdmin();
   Future<bool> isUserAdmin();
 
-  Future<void> getFcmToken();
+  Future<void> updateFcmToken(String token);
   Future<bool> logOut();
   Future<bool> deleteUserAccount();
 }
@@ -189,10 +190,7 @@ class AuthServicesImpl implements AuthServices {
       if (doc.exists && doc.data() != null) {
         final prefs = await SharedPreferences.getInstance();
 
-        prefs.setString(
-          'paymentPlanId',
-          doc.data()!['paymentPlanId'],
-        );
+        //Persist User stats locally
         await prefs.setString(
             'totalFavorites',
             doc.data()!['totalFavorites'] == null
@@ -205,11 +203,26 @@ class AuthServicesImpl implements AuthServices {
                 ? '0'
                 : doc.data()!['totalImpressions'].toString());
 
+        //Sync backend favourites, likes and disliked links with local ones
+        final data = doc.data();
+        syncUserLinkActionsWithBackend(linkStatusMap: {
+          'likedLinks': Set<String>.from(data!['liked'] ?? []),
+          'favoritedLinks': Set<String>.from(data['favorites'] ?? []),
+          'dislikedLinks': Set<String>.from(data['disliked'] ?? []),
+        });
+
+        //  Initialise Store and get User Payment Services.
+        prefs.setString(
+          'paymentPlanId',
+          doc.data()!['paymentPlanId'],
+        );
+
+        await PaymentServicesImpl().initStoreInfo();
+        var verified = await PaymentServicesImpl().getActivePurchases(doc: doc);
+
         return {
           'about': doc.data()!['bio'] as String?,
-          'isVerified': doc.data()!['verified'] == null
-              ? false
-              : doc.data()!['verified'] as bool?,
+          'isVerified': verified,
         };
       } else {
         return null; // Bio not set or document missing
@@ -217,6 +230,45 @@ class AuthServicesImpl implements AuthServices {
     } catch (e) {
       debugPrint('❌ Failed to fetch profile details: $e');
       return null;
+    }
+  }
+
+  Future<void> syncUserLinkActionsWithBackend({
+    required Map<String, Set<String>> linkStatusMap,
+  }) async {
+    final backendLikedLinks = linkStatusMap['liked'] ?? {};
+    final backendFavourites = linkStatusMap['favorites'] ?? {};
+    final backendDisLikedLinks = linkStatusMap['disliked'] ?? {};
+
+//sync Favorites With Backend
+    var localFavourites = await MiscImpl().getFavoriteLinks();
+    final mergedFavourites = {...localFavourites, ...backendFavourites};
+
+    localFavourites = mergedFavourites.toList();
+
+    for (var i in localFavourites) {
+      await MiscImpl().addFavorite(i);
+    }
+//sync Liked Links With Backend
+    var localLikedLinks = await MiscImpl().getLikedLinks();
+    final mergedLikedLinks = {...localLikedLinks, ...backendLikedLinks};
+
+    localLikedLinks = mergedLikedLinks.toList();
+
+    for (var i in localLikedLinks) {
+      await MiscImpl().addLikedLinks(i);
+    }
+//sync Disliked With Backend
+    var localDisLikedLinks = await MiscImpl().getDisLikedLinks();
+    final mergedDisLikedLinks = {
+      ...localDisLikedLinks,
+      ...backendDisLikedLinks
+    };
+
+    localDisLikedLinks = mergedDisLikedLinks.toList();
+
+    for (var i in localDisLikedLinks) {
+      await MiscImpl().addDisLikedLinks(i);
     }
   }
 
@@ -335,22 +387,17 @@ class AuthServicesImpl implements AuthServices {
   }
 
   @override
-  Future<void> getFcmToken() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    String? token = await messaging.getToken();
-
+  Future<void> updateFcmToken(String token) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    if (token != null) {
-      debugPrint("FCM Token: $token");
+    debugPrint("FCM Token: $token");
 
-      // Save this token in Firestore or your backend to send targeted notifications later
-      FirebaseFirestore.instance
-          .collection('Users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .set({'fcmToken': token}, SetOptions(merge: true));
-    }
+    // Save this token in Firestore or your backend to send targeted notifications later
+    FirebaseFirestore.instance
+        .collection('Users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .set({'fcmToken': token}, SetOptions(merge: true));
   }
 
   @override

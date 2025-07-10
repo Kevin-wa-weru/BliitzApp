@@ -74,6 +74,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
     _checkIfLiked();
     _checkIfDisLiked();
     favoriteCountNotifier.value = widget.groupDetails['favourites'];
+    print(
+        'Sdsdsdssd ${widget.groupDetails['likes']}, ${widget.groupDetails['dislikes']}');
     likeCountNotifier.value = widget.groupDetails['likes'];
     dislikeCountNotifier.value = widget.groupDetails['dislikes'];
 
@@ -265,49 +267,82 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                ValueListenableBuilder<bool>(
-                                    valueListenable: isFavoriteNotifier,
-                                    builder: (context, isFavorited, _) {
+                                ValueListenableBuilder<int>(
+                                    valueListenable: likeCountNotifier,
+                                    builder: (context, dislikeCounttt, child) {
                                       return ValueListenableBuilder<int>(
-                                          valueListenable:
-                                              favoriteCountNotifier,
-                                          builder: (context, favCount, child) {
-                                            return GestureDetector(
-                                              onTap: () {
-                                                if (widget.isFromDeepLink) {
-                                                  context.pushReplacement('/');
-                                                } else {
-                                                  Navigator.pop(
-                                                    context,
-                                                    {
-                                                      'linkId': widget
-                                                          .groupDetails['id'],
-                                                      'favCount': favCount,
-                                                      'isFavorited': isFavorited
-                                                    },
-                                                  );
-                                                }
-                                              },
-                                              child: Container(
-                                                height: Adapt.px(80),
-                                                width: Adapt.px(80),
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0x80141312),
-                                                  borderRadius:
-                                                      BorderRadius.all(
-                                                    Radius.circular(100.0),
-                                                  ),
-                                                ),
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.arrow_back,
-                                                    color: Colors.white
-                                                        .withOpacity(0.8),
-                                                    size: 20,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
+                                          valueListenable: likeCountNotifier,
+                                          builder:
+                                              (context, likeCounttt, child) {
+                                            return ValueListenableBuilder<bool>(
+                                                valueListenable:
+                                                    isFavoriteNotifier,
+                                                builder:
+                                                    (context, isFavorited, _) {
+                                                  return ValueListenableBuilder<
+                                                          int>(
+                                                      valueListenable:
+                                                          favoriteCountNotifier,
+                                                      builder: (context,
+                                                          favCount, child) {
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            if (widget
+                                                                .isFromDeepLink) {
+                                                              context
+                                                                  .pushReplacement(
+                                                                      '/');
+                                                            } else {
+                                                              print(
+                                                                  'Ushwalass ${dislikeCounttt}, $likeCounttt');
+                                                              Navigator.pop(
+                                                                context,
+                                                                {
+                                                                  'linkId':
+                                                                      widget.groupDetails[
+                                                                          'id'],
+                                                                  'favCount':
+                                                                      favCount,
+                                                                  'isFavorited':
+                                                                      isFavorited,
+                                                                  'dislikeCount':
+                                                                      dislikeCounttt,
+                                                                  'likeCount':
+                                                                      likeCounttt
+                                                                },
+                                                              );
+                                                            }
+                                                          },
+                                                          child: Container(
+                                                            height:
+                                                                Adapt.px(80),
+                                                            width: Adapt.px(80),
+                                                            decoration:
+                                                                const BoxDecoration(
+                                                              color: Color(
+                                                                  0x80141312),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .all(
+                                                                Radius.circular(
+                                                                    100.0),
+                                                              ),
+                                                            ),
+                                                            child: Center(
+                                                              child: Icon(
+                                                                Icons
+                                                                    .arrow_back,
+                                                                color: Colors
+                                                                    .white
+                                                                    .withOpacity(
+                                                                        0.8),
+                                                                size: 20,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      });
+                                                });
                                           });
                                     }),
                                 Padding(
@@ -363,7 +398,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                     ),
                                   ),
                                 ),
-                                if (widget.groupDetails['promoted']) ...[
+                                if (widget.groupDetails['promoted'] != null &&
+                                    widget.groupDetails['promoted']) ...[
                                   const SizedBox(width: 4),
                                   const Icon(
                                     Icons.verified,
@@ -572,10 +608,15 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                                   likeCountNotifier,
                                               builder:
                                                   (context, likeCount, child) {
+                                                var totalActvity =
+                                                    likeCount.abs() +
+                                                        dislikeCount.abs();
+                                                var likeRatio =
+                                                    likeCount.abs() * 100;
                                                 return Text(
-                                                  likeCount <= 0
+                                                  likeRatio == 0
                                                       ? '0 %'
-                                                      : '${(likeCount / (likeCount + dislikeCount) * 100).round()}%',
+                                                      : '${(likeRatio / totalActvity).round()}%',
                                                   style: TextStyle(
                                                     fontFamily: 'Questrial',
                                                     color: Colors.white
@@ -657,10 +698,15 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                                   dislikeCountNotifier,
                                               builder: (context, dislikeCount,
                                                   child) {
+                                                var totalActvity =
+                                                    likeCount.abs() +
+                                                        dislikeCount.abs();
+                                                var dislikeRatio =
+                                                    dislikeCount.abs() * 100;
                                                 return Text(
-                                                  dislikeCount <= 0
+                                                  dislikeRatio == 0
                                                       ? '0 %'
-                                                      : '${(dislikeCount / (likeCount + dislikeCount) * 100).round()}%',
+                                                      : '${(dislikeRatio / totalActvity).round()}%',
                                                   style: TextStyle(
                                                     fontFamily: 'Questrial',
                                                     color: Colors.white

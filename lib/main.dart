@@ -1,9 +1,3 @@
-import 'package:bliitz/Features/Favorites/favorite_deep_link_page.dart';
-import 'package:bliitz/Features/HomeScreen/CategoryPages/category_deep_link_page.dart';
-import 'package:bliitz/Features/HomeScreen/LinkPages/link_info_deep_link.dart';
-import 'package:bliitz/Features/HomeScreen/Profile/profile_page_deep_link.dart';
-import 'package:bliitz/Features/Authentication/new_login.dart';
-import 'package:bliitz/Features/HomeScreen/home_screen.dart';
 import 'package:bliitz/Features/HomeScreen/main_page.dart';
 
 import 'package:bliitz/services/sql_services.dart';
@@ -11,14 +5,10 @@ import 'package:bliitz/utils/_index.dart';
 import 'package:bliitz/widgets/internet_banner.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 // SETTING UP IOS DEEP LINKS.
-
-// https://chatgpt.com/c/68125c4a-c0f8-8001-be72-bff41e3e53a2
 
 /* avoids code removal during tree-shaking. Without this annotation, background
 handler  function will be ignored during build */
@@ -59,64 +49,63 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: unused_local_variable
-    final GoRouter router = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const MainPage(),
-        ),
-        GoRoute(
-          path: '/profile/:screen',
-          builder: (context, state) {
-            final screen = state.pathParameters['screen']!;
-            final query = state.uri.queryParameters;
+    // final GoRouter router = GoRouter(
+    //   routes: [
+    //     GoRoute(
+    //       path: '/',
+    //       builder: (context, state) => const MainPage(),
+    //     ),
+    //     GoRoute(
+    //       path: '/profile/:screen',
+    //       builder: (context, state) {
+    //         final screen = state.pathParameters['screen']!;
+    //         final query = state.uri.queryParameters;
 
-            if (screen.contains('PROFILE')) {
-              return ProfilePageDeepLink(
-                userId: query['userId']!,
-              );
-            }
-            if (screen.contains('CATEGORY')) {
-              return CategoryDetailPageDeepLink(
-                categoryImageUrl: query['categoryImageUrl']!,
-                category: query['category']!,
-                socialType: query['socialType']!,
-              );
-            }
-            if (screen.contains('FAVORITE')) {
-              return FavoriteDeepLinkPage(
-                userId: query['userId']!,
-              );
-            }
+    //         if (screen.contains('PROFILE')) {
+    //           return ProfilePageDeepLink(
+    //             userId: query['userId']!,
+    //           );
+    //         }
+    //         if (screen.contains('CATEGORY')) {
+    //           return CategoryDetailPageDeepLink(
+    //             categoryImageUrl: query['categoryImageUrl']!,
+    //             category: query['category']!,
+    //             socialType: query['socialType']!,
+    //           );
+    //         }
+    //         if (screen.contains('FAVORITE')) {
+    //           return FavoriteDeepLinkPage(
+    //             userId: query['userId']!,
+    //           );
+    //         }
 
-            if (screen.contains('LINKINFO')) {
-              return LinkInfoPageDeepLink(
-                userId: query['userId']!,
-                linkId: query['linkId']!,
-              );
-            } else {
-              return const MainPage();
-            }
-          },
-        ),
-        GoRoute(
-          path: '/home_screen',
-          builder: (context, state) => const HomeScreen(),
-        ),
-        GoRoute(
-          path: '/sign_in',
-          builder: (context, state) => const SignIn(),
-        ),
-      ],
-    );
+    //         if (screen.contains('LINKINFO')) {
+    //           return LinkInfoPageDeepLink(
+    //             userId: query['userId']!,
+    //             linkId: query['linkId']!,
+    //           );
+    //         } else {
+    //           return const MainPage();
+    //         }
+    //       },
+    //     ),
+    //     GoRoute(
+    //       path: '/home_screen',
+    //       builder: (context, state) => const HomeScreen(),
+    //     ),
+    //     GoRoute(
+    //       path: '/sign_in',
+    //       builder: (context, state) => const SignIn(),
+    //     ),
+    //   ],
+    // );
 
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Color(0xFF141312),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    );
+    // SystemChrome.setSystemUIOverlayStyle(
+    //   const SystemUiOverlayStyle(
+    //     systemNavigationBarColor: Color(0xFF141312),
+    //     systemNavigationBarIconBrightness: Brightness.light,
+    //   ),
+    // );
 //  MaterialApp.router
     return MaterialApp(
       // routerConfig: router,

@@ -231,7 +231,9 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Link has been deleted.')));
-                            context.read<GetOwnersLinksCubit>().getLinks();
+                            context
+                                .read<GetOwnersLinksCubit>()
+                                .getLinks('Facebook');
                           } else {
                             isDeletingGroup.value = false;
                             Navigator.pop(context);
@@ -460,7 +462,7 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                                       width: 8,
                                     ),
                                     Transform.translate(
-                                        offset: const Offset(0.0, -2),
+                                        offset: const Offset(0.0, 2),
                                         child: Text(
                                           'Impressions',
                                           style: TextStyle(
@@ -552,7 +554,7 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                                       width: 8,
                                     ),
                                     Transform.translate(
-                                        offset: const Offset(0.0, -2),
+                                        offset: const Offset(0.0, 2),
                                         child: Text(
                                           'Favorites',
                                           style: TextStyle(
@@ -864,22 +866,37 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                                       width: 4,
                                     ),
                                     ValueListenableBuilder<int>(
-                                        valueListenable: likeCountNotifier,
-                                        builder: (context, likeCount, child) {
-                                          return Text(
-                                            likeCount.toString(),
-                                            style: TextStyle(
-                                              fontFamily: 'Questrial',
-                                              color:
-                                                  Colors.white.withOpacity(0.6),
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 14,
-                                              letterSpacing: 0.25,
-                                              height: 1.5,
-                                              decorationColor: Colors.white
-                                                  .withOpacity(0.75),
-                                            ),
-                                          );
+                                        valueListenable: dislikeCountNotifier,
+                                        builder:
+                                            (context, dislikeCount, child) {
+                                          return ValueListenableBuilder<int>(
+                                              valueListenable:
+                                                  likeCountNotifier,
+                                              builder:
+                                                  (context, likeCount, child) {
+                                                var totalActvity =
+                                                    likeCount.abs() +
+                                                        dislikeCount.abs();
+                                                var likeRatio =
+                                                    likeCount.abs() * 100;
+                                                return Text(
+                                                  likeRatio == 0
+                                                      ? '0 %'
+                                                      : '${(likeRatio / totalActvity).round()}%',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Questrial',
+                                                    color: Colors.white
+                                                        .withOpacity(0.6),
+                                                    fontWeight: FontWeight.w400,
+                                                    fontSize: 14,
+                                                    letterSpacing: 0.25,
+                                                    height: 1.5,
+                                                    decorationColor: Colors
+                                                        .white
+                                                        .withOpacity(0.75),
+                                                  ),
+                                                );
+                                              });
                                         })
                                   ],
                                 ),
@@ -940,23 +957,36 @@ class _OwnerGroupInfoState extends State<OwnerGroupInfo> {
                                       width: 4,
                                     ),
                                     ValueListenableBuilder<int>(
-                                        valueListenable: dislikeCountNotifier,
-                                        builder:
-                                            (context, dislikeCount, child) {
-                                          return Text(
-                                            dislikeCount.toString(),
-                                            style: TextStyle(
-                                              fontFamily: 'Questrial',
-                                              color:
-                                                  Colors.white.withOpacity(0.6),
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 14,
-                                              letterSpacing: 0.25,
-                                              height: 1.5,
-                                              decorationColor: Colors.white
-                                                  .withOpacity(0.75),
-                                            ),
-                                          );
+                                        valueListenable: likeCountNotifier,
+                                        builder: (context, likeCount, child) {
+                                          return ValueListenableBuilder<int>(
+                                              valueListenable:
+                                                  dislikeCountNotifier,
+                                              builder: (context, dislikeCount,
+                                                  child) {
+                                                var totalActvity =
+                                                    likeCount.abs() +
+                                                        dislikeCount.abs();
+                                                var dislikeRatio =
+                                                    dislikeCount.abs() * 100;
+                                                return Text(
+                                                  dislikeRatio == 0
+                                                      ? '0 %'
+                                                      : '${(dislikeRatio / totalActvity).round()}%',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Questrial',
+                                                    color: Colors.white
+                                                        .withOpacity(0.6),
+                                                    fontWeight: FontWeight.w400,
+                                                    fontSize: 14,
+                                                    letterSpacing: 0.25,
+                                                    height: 1.5,
+                                                    decorationColor: Colors
+                                                        .white
+                                                        .withOpacity(0.75),
+                                                  ),
+                                                );
+                                              });
                                         })
                                   ],
                                 ),

@@ -28,7 +28,8 @@ class _ExplorePageState extends State<ExplorePage>
     with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<bool> _isTitleVisible = ValueNotifier<bool>(true);
-  final ValueNotifier<String> selectedSocial = ValueNotifier<String>('');
+  final ValueNotifier<String> selectedSocial =
+      ValueNotifier<String>('Facebook');
 
   @override
   void initState() {
@@ -142,108 +143,121 @@ class _ExplorePageState extends State<ExplorePage>
                   },
                 ),
               ),
-              BlocConsumer<GetLinksCubit, GetLinksState>(
-                buildWhen: (previous, current) {
-                  return current is GetLinksStateLoaded &&
-                          current.currentPage == 'Explore' ||
-                      current is GetLinksStateLoading;
+              ValueListenableBuilder<String>(
+                  valueListenable: selectedSocial,
+                  builder: (context, social, child) {
+                    return RefreshIndicator(
+                      backgroundColor: const Color(0xFF1E1D1C),
+                      color: const Color(0xCC01DE27),
+                      onRefresh: () => context
+                          .read<GetLinksCubit>()
+                          .getLinks('Explore', false, social),
+                      child: BlocConsumer<GetLinksCubit, GetLinksState>(
+                        buildWhen: (previous, current) {
+                          return current is GetLinksStateLoaded &&
+                                  current.currentPage == 'Explore' ||
+                              current is GetLinksStateLoading;
 
-                  // 👈 only rebuild if it matches!
-                },
-                listener: (context, state) {},
-                builder: (context, state) {
-                  if (state is GetLinksStateInitial) {
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: _isTitleVisible,
-                      builder: (context, isVisible, child) {
-                        return AnimatedPositioned(
-                            duration: const Duration(milliseconds: 150),
-                            curve: Curves.easeInOut,
-                            top: isVisible ? 70 : 10,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: Column(
-                              children: [
-                                SizedBox(height: Adapt.screenH() * .27),
-                                const EqualizerLoader(
-                                  color: Color(0xCC01DE27),
-                                ),
-                              ],
-                            ));
-                      },
-                    );
-                  }
-                  if (state is GetLinksStateLoading) {
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: _isTitleVisible,
-                      builder: (context, isVisible, child) {
-                        return AnimatedPositioned(
-                            duration: const Duration(milliseconds: 150),
-                            curve: Curves.easeInOut,
-                            top: isVisible ? 70 : 10,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: Column(
-                              children: [
-                                SizedBox(height: Adapt.screenH() * .27),
-                                const EqualizerLoader(
-                                  color: Color(0xCC01DE27),
-                                ),
-                              ],
-                            ));
-                      },
-                    );
-                  }
-                  if (state is GetLinksStateLoaded) {
-                    if (state.links.isEmpty) {
-                      return const EmptyDataWidget();
-                    } else {
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: _isTitleVisible,
-                        builder: (context, isVisible, child) {
-                          return AnimatedPositioned(
-                            duration: const Duration(milliseconds: 150),
-                            curve: Curves.easeInOut,
-                            top: isVisible
-                                ? textScaleFactor > 1.0
-                                    ? 70
-                                    : 70
-                                : 10,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: MediaQuery.removePadding(
-                              context: context,
-                              removeBottom: true,
-                              removeTop: true,
-                              child: ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.only(bottom: 60.0),
-                                itemCount: state.links.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return SingleGroupItem(
-                                    groupDetails: state.links[index],
-                                    isOwnersGroups: false,
-                                    isViewinginGroupInfo: false,
-                                    index: index,
-                                    navigationCount: 1,
+                          // 👈 only rebuild if it matches!
+                        },
+                        listener: (context, state) {},
+                        builder: (context, state) {
+                          if (state is GetLinksStateInitial) {
+                            return ValueListenableBuilder<bool>(
+                              valueListenable: _isTitleVisible,
+                              builder: (context, isVisible, child) {
+                                return AnimatedPositioned(
+                                    duration: const Duration(milliseconds: 150),
+                                    curve: Curves.easeInOut,
+                                    top: isVisible ? 70 : 10,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Column(
+                                      children: [
+                                        SizedBox(height: Adapt.screenH() * .27),
+                                        const EqualizerLoader(
+                                          color: Color(0xCC01DE27),
+                                        ),
+                                      ],
+                                    ));
+                              },
+                            );
+                          }
+                          if (state is GetLinksStateLoading) {
+                            return ValueListenableBuilder<bool>(
+                              valueListenable: _isTitleVisible,
+                              builder: (context, isVisible, child) {
+                                return AnimatedPositioned(
+                                    duration: const Duration(milliseconds: 150),
+                                    curve: Curves.easeInOut,
+                                    top: isVisible ? 70 : 10,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Column(
+                                      children: [
+                                        SizedBox(height: Adapt.screenH() * .27),
+                                        const EqualizerLoader(
+                                          color: Color(0xCC01DE27),
+                                        ),
+                                      ],
+                                    ));
+                              },
+                            );
+                          }
+                          if (state is GetLinksStateLoaded) {
+                            if (state.links.isEmpty) {
+                              return const EmptyDataWidget();
+                            } else {
+                              return ValueListenableBuilder<bool>(
+                                valueListenable: _isTitleVisible,
+                                builder: (context, isVisible, child) {
+                                  return AnimatedPositioned(
+                                    duration: const Duration(milliseconds: 150),
+                                    curve: Curves.easeInOut,
+                                    top: isVisible
+                                        ? textScaleFactor > 1.0
+                                            ? 70
+                                            : 70
+                                        : 10,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: MediaQuery.removePadding(
+                                      context: context,
+                                      removeBottom: true,
+                                      removeTop: true,
+                                      child: ListView.builder(
+                                        controller: _scrollController,
+                                        padding:
+                                            const EdgeInsets.only(bottom: 60.0),
+                                        itemCount: state.links.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return SingleGroupItem(
+                                            groupDetails: state.links[index],
+                                            isOwnersGroups: false,
+                                            isViewinginGroupInfo: false,
+                                            index: index,
+                                            navigationCount: 1,
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   );
                                 },
-                              ),
-                            ),
-                          );
+                              );
+                            }
+                          } else {
+                            return const Center(
+                              child: Text('Error getting links'),
+                            );
+                          }
                         },
-                      );
-                    }
-                  } else {
-                    return const Center(
-                      child: Text('Error getting links'),
+                      ),
                     );
-                  }
-                },
-              ),
+                  }),
             ],
           ),
         ),

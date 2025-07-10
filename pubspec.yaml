@@ -1,7 +1,7 @@
 name: bliitz
 description: "A fun platform for sharing social group links"
 publish_to: 'none' 
-version: 1.0.0+6
+version: 1.0.0+10
 
 environment:
   sdk: '>=3.3.3 <4.0.0'
@@ -58,6 +58,8 @@ dev_dependencies:
   json_serializable: ^6.9.5
   # flutter_launcher_icons: "^0.13.1"
 
+# flutter pub run flutter_launcher_icons:main
+# flutter build appbundle --release
 flutter_launcher_icons:
   android: true
   ios: true
@@ -65,13 +67,13 @@ flutter_launcher_icons:
   adaptive_icon_background: "assets/icons/ic_background.png"
   # adaptive_icon_foreground: "assets/icons/ic_launcher_2.png"
   # adaptive_icon_foreground: "assets/icons/pipi.png"
-  adaptive_icon_foreground: "assets/icons/buti.png"
+  adaptive_icon_foreground: "assets/icons/iconic.png"
   remove_alpha_ios: true
-  adaptive_icon_foreground_inset: 32
+  adaptive_icon_foreground_inset: 24
 
 flutter_native_splash:
   color: "#000000" # Black background
-  image: assets/icons/ic_foreground.png # Your logo path
+  image: assets/images/plashed.png # Your logo path
   android: true
   ios: true
   fullscreen: true

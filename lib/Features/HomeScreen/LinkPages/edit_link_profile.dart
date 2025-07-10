@@ -175,7 +175,7 @@ class _EditGroupInfoState extends State<EditGroupInfo>
               _aboutController.text);
         }
 
-        context.read<GetOwnersLinksCubit>().getLinks();
+        context.read<GetOwnersLinksCubit>().getLinks('Facebook');
       } else {
         Navigator.pop(context);
         ScaffoldMessenger.of(context)
